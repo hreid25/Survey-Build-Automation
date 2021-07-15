@@ -72,19 +72,19 @@ for r in range(4, 100):
 # hoverlanguage count actually includes all of the None type objects read in using
 # openpyxl (approx 32), even though there may be fewer languages
 # TO DO: find the last column of data and stop there (both in the question array and hover array)
-# TO DO: hover replaces word in text without lower case
 
 hoverlanguagecount = len((hover_words_array[0]))
 numtotalhovers = len(hover_words_array) - 1
 numtotalquestions = len(questionarr)
 
-langnum = 0
+langnum = 1
+hoverlangnum = 0
 
 while langnum < hoverlanguagecount:
     hovernum = 1
     while hovernum < numtotalhovers:
-        word = hover_words_array[hovernum][langnum]
-        text = hover_texts_array[hovernum][langnum]
+        word = hover_words_array[hovernum][hoverlangnum]
+        text = hover_texts_array[hovernum][hoverlangnum]
         if word is not None and text is not None:
             questionnum = 1
             while questionnum < numtotalquestions:
@@ -107,6 +107,7 @@ while langnum < hoverlanguagecount:
                 questionnum += 1
         hovernum += 1
     langnum += 1
+    hoverlangnum += 1
 
 
 # *************************READ IN SURVEY INVITATION EMAIL**************************************************************
@@ -123,9 +124,9 @@ for r in range(16, 37):
 emailinvitationarray = [x for x in arr if x != []]
 totallanguagecount = len(emailinvitationarray[0])
 
-# ***********************CREATE CHROME DRIVER*****************************************************************************************
-# ***********************CREATE CHROME DRIVER*****************************************************************************************
-# ***********************CREATE CHROME DRIVER*****************************************************************************************
+# ****************************************************CREATE CHROME DRIVER************************************************************
+# ****************************************************CREATE CHROME DRIVER************************************************************
+# ****************************************************CREATE CHROME DRIVER*************************************************************
 
 chrome_options = Options()
 chrome_options.add_argument(
@@ -142,9 +143,9 @@ linkElemEng.click()
 # surveyname = input("Enter the name of your survey as it appears in Sergeant: ")
 surveyname = "Survey Automation Testing"
 
-# ***********************FIND SURVEY NAME / START EDITING********************************************************
-# ***********************FIND SURVEY NAME / START EDITING********************************************************
-# ***********************FIND SURVEY NAME / START EDITING********************************************************
+# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
+# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
+# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
 
 
 searchforsurvey = driver.find_element_by_xpath(
@@ -242,9 +243,9 @@ def logginginfoedit():
           emailinvitationarray[0][languagedropdownposition])
     print("----------------------------------------------------------------")
 
-# ***********************COMPARE QUESTION IDS IN SERGEANT TO MULTI-QIL*****************************************************************************************
-# ***********************COMPARE QUESTION IDS IN SERGEANT TO MULTI-QIL*****************************************************************************************
-# ***********************COMPARE QUESTION IDS IN SERGEANT TO MULTI-QIL*****************************************************************************************
+# ***********************REMOVE SENIOR MANAGEMENT QUESTIONS GROUPING*****************************************************************************************
+# ***********************REMOVE SENIOR MANAGEMENT QUESTIONS GROUPING*****************************************************************************************
+# ***********************REMOVE SENIOR MANAGEMENT QUESTIONS GROUPING*****************************************************************************************
 # Check for the presence of senior management relationships question groups and delete them from page 2.
 # Required in order to equalize the length of the delete toggles list with that of id and text.
 
@@ -252,7 +253,7 @@ def logginginfoedit():
 start_time_measure_seniormgt_deletion = time.time()
 clicknext()
 sergeantlistdeletetoggleposition = 0
-secondarytextlist = []
+# secondarytextlist = []
 scanningforquestiongroups = True
 while scanningforquestiongroups is True:
     try:
@@ -264,10 +265,7 @@ while scanningforquestiongroups is True:
             (By.XPATH, "//h6[contains(text(),'Question Group Title')]/following::div[@class='row'][3]/div/div")))
         questiongroupspresent = questiongroupsobjects.is_displayed()
         while questiongroupspresent is True:
-            # print(len(list(findquestiongroups)), len(list(seniormgmtdeletetoggles)),
-            #       seniormanagementtext.is_displayed())
-            for x in findquestiongroups:
-                secondarytextlist.append(x.text)
+            secondarytextlist = [x.text for x in findquestiongroups]
             for i in secondarytextlist:
                 if i == "Question Group Title":
                     seniormgmtdeletetoggles[sergeantlistdeletetoggleposition].click()
@@ -289,12 +287,14 @@ print("--- %s seconds ---" % (time.time() - start_time_measure_seniormgt_deletio
 # ***********************COMPARE QUESTION IDS IN SERGEANT TO MULTI-QIL*****************************************************************************************
 # ***********************COMPARE QUESTION IDS IN SERGEANT TO MULTI-QIL*****************************************************************************************
 # ***********************COMPARE QUESTION IDS IN SERGEANT TO MULTI-QIL*****************************************************************************************
-
-# This code block is responsible for copying and pasting the multilingual QIL text over to the Sergeant question id fields.
+# This code block is responsible for:
+# Sending text from the multilingual QIL to Sergeant Question text area fields.
+# Deleting Questions (Via toggledelete())
+# Adding new questions to Sergeant
 # Multiple time.sleep()'s have been introduced to allow for the DOM/page to load properly. Although inefficient,
 # it is difficult to improve the XPATH's for these objects as unique attribute identifiers are not used in the XML DOM.
 # Also responsible for deleting questions where multilingual QIL cells are of NoneType.
-# Responsible for adding additional questions where possible
+
 
 # TO DO: Likely going to have to delete questions first based on how questions are being matched to the QIL from Sergeant
 # TO DO: After the code runs it should print out operations to a log file for review by the Project Coordinator for QA
@@ -360,14 +360,13 @@ while condition is True:
                 # This checks if we have edited the last question of page 2, then saves and clicks next
                 elif questionid_count == len(sergeantquestionidlist) and pagechangecount < 2:
                     savepage()
-                    clicknext()
+                    clicknext()  # Introduce loop here to start adding questions?
                     pagechangecount += 1
                     questionid_count = 0
                     sergeantidpos = 0
                     time.sleep(3)
                 # This checks to see if we finished editing questions on page (3), saves and returns to first
                 elif questionid_count == len(sergeantquestionidlist) and pagechangecount == 2:
-                    # condition = False  # will need to be taken out so that we can increment language and start over
                     questionid_count = 1000000000000
                     savepage()
                     questions_returntopageone()
@@ -382,15 +381,15 @@ while condition is True:
                 # and breaks out of the loop altogether
                 if questionid_count == len(sergeantquestionidlist) and pagechangecount == 2:
                     savepage()
-                    questions_returntopageone()
+                    questions_returntopageone()  # Introduce loop here to start adding questions?
                     logginginfodelete()
                     time.sleep(2)
                     questionid_count = 1000000000000
                     break
-                # Checks to see if we are deleting the last question of page 2 and then saves -- next
+                # Checks to see if we are deleting the last question of page 2 and then saves and clicks next
                 elif questionid_count == len(sergeantquestionidlist) and pagechangecount == 1:
                     savepage()
-                    clicknext()
+                    clicknext()  # Introduce loop here to start adding questions?
                     time.sleep(2)
                     pagechangecount += 1
                     questionid_count = 0
@@ -401,3 +400,29 @@ print("--- %s seconds ---" % (time.time() - start_time))
 # https://stackoverflow.com/questions/27175400/how-to-find-the-index-of-a-value-in-2d-array-in-python
 # https://stackoverflow.com/questions/11223011/attributeerror-list-object-has-no-attribute-click-selenium-webdriver
 # https://stackoverflow.com/questions/17385419/find-indices-of-a-value-in-2d-matrix/17388914
+
+# ****************************************************ADD QUESTIONS************************************************************
+# ****************************************************ADD QUESTIONS************************************************************
+# ****************************************************ADD QUESTIONS************************************************************
+# All questions have an element inside the question text area field with a Boolean value True or False
+# Will need to rebuild the list on each iteration to include the questions from before in order to edit the question in the next language
+# the script should automatically rebuild the web elements object list on future languages, but the QIL will not be able to reference
+# the corresponding ID number since this is created afterwards.
+# Custom question translation will need separate logic to handle how to check for matches without question ID.
+# May have to write the new question id from created question back to multilingual QIL to then properly edit over them on future loops.
+
+# for i, category in enumerate(questionarr):
+#     if category[0] is None:
+#         replacestring = str(questionarr[i - 1][0])
+#         questionarr[i][0] = replacestring
+
+# find driver name
+#
+# Driver name field
+# //fieldset/descendent::h4
+# Add Question Button
+# //div[@class='span12']/ul/div/li/button
+# Add Question text area (after fade in (XPATH))
+# //form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/select[@class='grouped_select optional selectized']
+# Add Question Save Button (after fade in)
+# //form[@id='add-custom-question-form']/div[@class='modal-footer']/input
