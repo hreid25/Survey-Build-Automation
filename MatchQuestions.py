@@ -19,8 +19,8 @@ import re
 # ***********************Start timer, load workbook, ask input********************************************************
 
 start_time = time.time()
-wb = openpyxl.load_workbook('QIL Document_V2_20210518_2.xlsm')
-# wb = openpyxl.load_workbook(input("Please enter the name of your QIL Document: "))
+# wb = openpyxl.load_workbook('QIL Document_V2_20210518_2.xlsm')
+wb = openpyxl.load_workbook(input("Please enter the name of your QIL Document: "))
 surveyhovers = wb['5- Hovers (Optional)']
 surveyquest = wb['4- Survey Questions']
 surveyinv = wb['2- Survey Invitation']
@@ -140,8 +140,8 @@ linkElem.click()
 linkElemEng = driver.find_element_by_link_text('Engagement')
 linkElemEng.click()
 
-# surveyname = input("Enter the name of your survey as it appears in Sergeant: ")
-surveyname = "Survey Automation Testing"
+surveyname = input("Enter the name of your survey as it appears in Sergeant: ")
+# surveyname = "Survey Automation Testing"
 
 # ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
 # ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
@@ -309,7 +309,8 @@ languagedropdownposition = 0
 while condition is True:
     # This checks to see if we have finished processing a language
     # totallanguagecount - 1 accounts for the fact we start on the English language page
-    if pagechangecount == 2 and languagedropdownposition < totallanguagecount - 1:
+    # if pagechangecount == 2 and languagedropdownposition < totallanguagecount - 1:
+    if pagechangecount == 2 and totallanguagecount > 1:
         questionid_count = 0
         sergeantidpos = 0
         pagechangecount = 0
@@ -365,7 +366,7 @@ while condition is True:
                     questionid_count = 0
                     sergeantidpos = 0
                     time.sleep(3)
-                # This checks to see if we finished editing questions on page (3), saves and returns to first
+                # This checks to see if the last item in the list was edited, saves and returns to first
                 elif questionid_count == len(sergeantquestionidlist) and pagechangecount == 2:
                     questionid_count = 1000000000000
                     savepage()
@@ -373,7 +374,8 @@ while condition is True:
                     time.sleep(2)
                     break
             # This checks to ensure we are only deleting questions once and that the cell value object type is None.
-            elif languagenumber == 1 and questionarr[QILquestionposition][languagenumber] is None:
+            # This also checks to make sure we are only deleting the questions once (in English, languagenumber == 2)
+            elif languagenumber == 2 and questionarr[QILquestionposition][languagenumber] is None:
                 toggledeletelist[sergeantidpos].click()
                 questionid_count += 1
                 sergeantidpos += 1
@@ -417,11 +419,11 @@ print("--- %s seconds ---" % (time.time() - start_time))
 #         questionarr[i][0] = replacestring
 
 # find driver name
-#
+# //*[@id="survey_pages_attributes_0_page_questions_attributes_0_title"]/following::h4[not(@*)]
 # Driver name field
 # //fieldset/descendent::h4
-# Add Question Button
-# //div[@class='span12']/ul/div/li/button
+# AddQuestionsButtons = WebDriverWait(driver, 20).until(
+#     EC.presence_of_all_elements_located((By.XPATH, "//div[@class='span12']/ul/div/li/button")))
 # Add Question text area (after fade in (XPATH))
 # //form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/select[@class='grouped_select optional selectized']
 # Add Question Save Button (after fade in)
