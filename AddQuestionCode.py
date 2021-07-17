@@ -1,20 +1,17 @@
 import openpyxl
-# import time
-# from selenium import webdriver
+# import logging
+from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
-# from selenium.common.exceptions import NoSuchElementException
-# from selenium.common.exceptions import StaleElementReferenceException
-# from selenium.common.exceptions import ElementClickInterceptedException
-# from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.options import Options
 
 wb = openpyxl.load_workbook('QIL Document_V2_20210518_2.xlsm')
 # wb = openpyxl.load_workbook(input("Please enter the name of your QIL Document: "))
 surveyhovers = wb['5- Hovers (Optional)']
 surveyquest = wb['4- Survey Questions']
 surveyinv = wb['2- Survey Invitation']
+
 
 # ***********************CREATE MULTILINGUAL QIL ARRAY********************************************************
 # ***********************CREATE MULTILINGUAL QIL ARRAY********************************************************
@@ -49,6 +46,9 @@ totallanguagecount = len(emailinvitationarray[0])
 def addcustomquestions():
     questiondrivernames = WebDriverWait(driver, 20).until(
         EC.presence_of_all_elements_located((By.XPATH, "//*[@id='survey_pages_attributes_0_page_questions_attributes_0_title']/following::h4[not(@*)]")))
+    secondarydrivernamelist = []
+    for x in questiondrivernames:
+        secondarydrivernamelist.append(x.text)
     # You may have to 'click' the question text area first and then call send_keys for the question text
     for i, excelrowlistobject in enumerate(questionarr):
         if excelrowlistobject[1] is None and excelrowlistobject[2] is not None:
@@ -56,34 +56,43 @@ def addcustomquestions():
             if excelrowlistobject[2] == "Empty Slot":
                 continue
             else:
-                # print("***************************************************")
-                # print("Driver Name: ", excelrowlistobject[0])
-                # print("Row Number: ", i, " Question Text: ", excelrowlistobject[2])
-                # print("***************************************************")
-                for drivername in questiondrivernames.text:
+                for drivername in secondarydrivernamelist:
                     if excelrowlistobject[0] == drivername:
+                        # print(type(drivername))
                         # Click the Add Question Button following the driver name match
-                        WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-                            (By.XPATH, f"//h4[not(@*) and contains(text(),{excelrowlistobject[0]})]/following::button[position()=1]"))).click()
-                        # AddQuestionTextArea
-                        WebDriverWait(driver, 20).until(
-                            EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/select[@class='grouped_select optional selectized']/option"))).send_keys(excelrowlistobject[2])
+                        WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                            (By.XPATH, "//h4[not(@*) and contains(text(),'" + excelrowlistobject[0] + "')]/following::button[position()=1]"))).click()
+                        # Instantiate AddQuestionTextArea
+                        addquestiontextarea = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+                            (By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/div[@class='selectize-control grouped_select optional single']/div/input")))
+                        # Send question text to text area field
+                        addquestiontextarea.send_keys(excelrowlistobject[2])
                         # Click Save
-                        WebDriverWait(driver, 20).until(
-                            EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input"))).click()
-                        # May need to time.sleep() here and wait for the ID to get pulled
-                        # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
+                        clickercounter = 0
+                        while clickercounter < 2:
+                            try:
+                                WebDriverWait(driver, 4).until(
+                                    EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
+                            except Exception:
+                                print("Have attempted: " + str(clickercounter) + " save button clicks")
+                                clickercounter += 1
+                                continue
+                            # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
                         newcustomquestionid = WebDriverWait(driver, 20).until(
-                            EC.element_to_be_clickable((By.XPATH, f"//*[starts-with(@class='question-text-area') and contains(text(),{excelrowlistobject[2]})]/following::strong[position()=2]")))
+                            EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
+                        # //textarea[contains(text(),)]/following: : strong[position() = 2]
                         # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
                         for counter, qilrowlistobject in enumerate(questionarr):
                             if excelrowlistobject[2] == questionarr[counter][2]:
-                                questionarr[counter][1] = int(newcustomquestionid)
+                                insertcustomidtoarray = newcustomquestionid.text
+                                questionarr[counter][1] = insertcustomidtoarray
         print(questionarr[i][1])
+
+
 # Example below of matching the newly saved question and grabbing that new Question's ID:
-# "//*[starts-with(@class,'question-text-area') and contains(text(),'My friends outside work would describe me as having a very positive attitude.')]/following::strong[position()=2]"
+# f"//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder={excelrowlistobject[2]}]/following::strong[position()=2]"
 
-
+# //*[starts-with(@class,'question-text-area sortable-disabled question')]/following::strong[position()=2]
 # pass the name of the driver back to the web element object to be found and clicked
 # f//h4[not(@*)contains(text()='{excelrowlistobject[0]}')]
 # f"//h4[not(@*) and contains(text(),{excelrowlistobject[0]})]/following::button[position()=1]")))
