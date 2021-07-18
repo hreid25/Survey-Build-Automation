@@ -4,9 +4,9 @@ import time
 from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import Select
+# from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import StaleElementReferenceException
@@ -175,7 +175,16 @@ def clicknext():
             (By.XPATH, "//sergeant-uploads1.s3.amazonaws.com/sergeant/brands/production/2/hr-logo.svg?1499654030")))
         driver.execute_script("arguments[0].click();", WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//*[@id='survey-edit-questions']/child::div[3]/div/ul/child::li[@class='next']/a"))))
-        print(str(c))
+        print("I've tried to click next, but something happened. It may be the case no Next button is present.", str(c))
+
+
+def return_home():
+    driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
+
+
+def click_prev():
+    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'2')]"))).click()
 
 
 def questions_returntopageone():
@@ -188,6 +197,7 @@ def questions_returntopageone():
         WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
         print(str(q))
+
 
 # McLean Logo typically intercepts the click when we go to save, return to page one and occassionally when we click next
 # depending on where we are on the page.
@@ -207,16 +217,16 @@ def savepage():
             EC.element_to_be_clickable((By.XPATH, "//*[@id='survey-edit-questions']/child::div[5]/input[@type='submit']"))))
 
 
-def changelanguage():
-    try:
-        for language in emailinvitationarray[0]:
-            if language == emailinvitationarray[0][languagedropdownposition]:
-                # WebDriverWait(driver, 20).until(
-                #     EC.visibility_of_element_located((By.XPATH, '//*[@id="language"]')))
-                languagedropdown = Select(driver.find_element_by_xpath('//*[@id="language"]'))
-                languagedropdown.select_by_visible_text(language)
-    except Exception as changefail:
-        print("unable to select the language dropdown option: ", changefail)
+# def changelanguage():
+#     try:
+#         for language in emailinvitationarray[0]:
+#             if language == emailinvitationarray[0][languagedropdownposition]:
+#                 # WebDriverWait(driver, 20).until(
+#                 #     EC.visibility_of_element_located((By.XPATH, '//*[@id="language"]')))
+#                 languagedropdown = Select(driver.find_element_by_xpath('//*[@id="language"]'))
+#                 languagedropdown.select_by_visible_text(language)
+#     except Exception as changefail:
+#         print("unable to select the language dropdown option: ", changefail)
 
 
 def clickswitch():
@@ -224,71 +234,26 @@ def clickswitch():
         By.XPATH, "//*[@class='tab-pane active']/div[@class='row']/div/form/child::input[@type='submit']"))).click()
 
 
-def logginginfodelete():
-    print("----------------------------------------------------------------")
-    print("Question ID: " + str(idnum) + " at QIL array position: " +
-          str(QILarrayenumerated) + " is None and was toggled to 'Delete'")
-    print("Question Counter = " + str(questionid_count), " Sergeant Toggle Pos = " +
-          str(sergeantidpos) + " Total Delete Buttons: " + str(len(toggledeletelist)))
-    print("Page Chg Count: ", pagechangecount)
-    print("----------------------------------------------------------------")
+# def logginginfodelete():
+#     print("----------------------------------------------------------------")
+#     print("Question ID: " + str(idnum) + " at QIL array position: " +
+#           str(QILarrayenumerated) + " is None and was toggled to 'Delete'")
+#     print("Question Counter = " + str(questionid_count), " Sergeant Toggle Pos = " +
+#           str(sergeantidpos) + " Total Delete Buttons: " + str(len(toggledeletelist)))
+#     print("Page Chg Count: ", pagechangecount)
+#     print("----------------------------------------------------------------")
+#
+#
+# def logginginfoedit():
+#     print("----------------------------------------------------------------")
+#     print("Question ID: " + str(idnum) + " at QIL array position: " +
+#           str(QILarrayenumerated) + " was edited")
+#     print("Question Counter = " + str(questionid_count), " Sergeant ID Pos = " +
+#           str(sergeantidpos))
+#     print("Page Chg Count: ", pagechangecount, 'Language: ',
+#           emailinvitationarray[0][languagedropdownposition])
+#     print("----------------------------------------------------------------")
 
-
-def logginginfoedit():
-    print("----------------------------------------------------------------")
-    print("Question ID: " + str(idnum) + " at QIL array position: " +
-          str(QILarrayenumerated) + " was edited")
-    print("Question Counter = " + str(questionid_count), " Sergeant ID Pos = " +
-          str(sergeantidpos))
-    print("Page Chg Count: ", pagechangecount, 'Language: ',
-          emailinvitationarray[0][languagedropdownposition])
-    print("----------------------------------------------------------------")
-
-
-def addcustomquestions():
-    questiondrivernames = WebDriverWait(driver, 20).until(
-        EC.presence_of_all_elements_located((By.XPATH, "//*[@id='survey_pages_attributes_0_page_questions_attributes_0_title']/following::h4[not(@*)]")))
-    secondarydrivernamelist = []
-    for x in questiondrivernames:
-        secondarydrivernamelist.append(x.text)
-    # You may have to 'click' the question text area first and then call send_keys for the question text
-    for i, excelrowlistobject in enumerate(questionarr):
-        if excelrowlistobject[1] is None and excelrowlistobject[2] is not None:
-            # OR condition to check for Y/N toggle for custom question where ID is present
-            if excelrowlistobject[2] == "Empty Slot":
-                continue
-            else:
-                for drivername in secondarydrivernamelist:
-                    if excelrowlistobject[0] == drivername:
-                        # print(type(drivername))
-                        # Click the Add Question Button following the driver name match
-                        WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-                            (By.XPATH, "//h4[not(@*) and contains(text(),'" + excelrowlistobject[0] + "')]/following::button[position()=1]"))).click()
-                        # Instantiate AddQuestionTextArea
-                        addquestiontextarea = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-                            (By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/div[@class='selectize-control grouped_select optional single']/div/input")))
-                        # Send question text to text area field
-                        addquestiontextarea.send_keys(excelrowlistobject[2])
-                        # Click Save
-                        clickercounter = 1
-                        while clickercounter < 2:
-                            try:
-                                WebDriverWait(driver, 4).until(
-                                    EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
-                            except Exception:
-                                print("Have attempted: " + str(clickercounter) + " save button clicks")
-                                clickercounter += 1
-                                continue
-                            # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
-                        newcustomquestionid = WebDriverWait(driver, 20).until(
-                            EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
-                        # //textarea[contains(text(),)]/following: : strong[position() = 2]
-                        # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
-                        for counter, qilrowlistobject in enumerate(questionarr):
-                            if excelrowlistobject[2] == questionarr[counter][2]:
-                                insertcustomidtoarray = newcustomquestionid.text
-                                questionarr[counter][1] = insertcustomidtoarray
-        print(questionarr[i][1])
 
 # ***********************REMOVE SENIOR MANAGEMENT QUESTIONS GROUPING*****************************************************************************************
 # ***********************REMOVE SENIOR MANAGEMENT QUESTIONS GROUPING*****************************************************************************************
@@ -300,11 +265,10 @@ def addcustomquestions():
 start_time_measure_seniormgt_deletion = time.time()
 clicknext()
 sergeantlistdeletetoggleposition = 0
-# secondarytextlist = []
 scanningforquestiongroups = True
 while scanningforquestiongroups is True:
     try:
-        questiongroupsobjects = WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
+        questiongroupsobjects = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
             (By.XPATH, "//h6[contains(text(),'Question Group Title')]")))
         findquestiongroups = WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.XPATH, "//h6[contains(text(),'Question Group Title')]")))
@@ -321,13 +285,13 @@ while scanningforquestiongroups is True:
             questiongroupspresent = False
             scanningforquestiongroups = False
         savepage()
-        questions_returntopageone()
+        # questions_returntopageone()
         break
     except Exception:
         scanningforquestiongroups = False
         questiongroupspresent = False
         print("No question group objects found")
-        questions_returntopageone()
+        # questions_returntopageone()
         break
 print("--- %s seconds ---" % (time.time() - start_time_measure_seniormgt_deletion))
 
@@ -342,125 +306,213 @@ print("--- %s seconds ---" % (time.time() - start_time_measure_seniormgt_deletio
 # it is difficult to improve the XPATH's for these objects as unique attribute identifiers are not used in the XML DOM.
 # Also responsible for deleting questions where multilingual QIL cells are of NoneType.
 
-
 # TO DO: Likely going to have to delete questions first based on how questions are being matched to the QIL from Sergeant
 # TO DO: After the code runs it should print out operations to a log file for review by the Project Coordinator for QA
-time.sleep(1)
-condition = True
-questionid_count = 0
-pagechangecount = 0
-sergeantidpos = 0
-languagenumber = 2
-languagedropdownposition = 0
+# time.sleep(1)
+# match the questionid from questionarr with the edittextarea object. Check to see if 16595
+# match the questionid from questionarr with the next
 
-while condition is True:
-    # This checks to see if we have finished processing a language
-    # totallanguagecount - 1 accounts for the fact we start on the English language page
-    # if pagechangecount == 2 and languagedropdownposition < totallanguagecount - 1:
-    if pagechangecount == 2 and totallanguagecount > 1:
-        questionid_count = 0
-        sergeantidpos = 0
-        pagechangecount = 0
-        languagenumber += 1
-        languagedropdownposition += 1
-        changelanguage()
-        clickswitch()
-        time.sleep(2)
-        print("Language changed to: ",
-              emailinvitationarray[0][languagedropdownposition])
-    # This checks that all languages in the dropdown have been processed
-    elif pagechangecount == 2 and languagedropdownposition >= totallanguagecount - 1:
-        condition = False
-        questions_returntopageone()
-        print('Done!')
-        break
-    while questionid_count <= len(questionarr):
-        secondaryidlist = []
-        toggledeletelist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
-            (By.XPATH, "//*[starts-with(@class,'move-content sortable-disabled')]/div[@class='row']/div/div")))
-        sergeantquestionidlist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
-            (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong")))
-        sergeantquestiontextlist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
-            (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong/ancestor::div/textarea[starts-with(@class,'question-text-area sortable-disabled question')]")))
-        # Creating a secondary list of id's to improve speed when we go to match against the ID in the QIL
-        secondarylistofquestions = [i.text for i in sergeantquestiontextlist]
-        secondaryidlist = [questionid.text for questionid in sergeantquestionidlist]
-        # for questionid in sergeantquestionidlist:
-        #     secondaryidlist.append(questionid.text)
-        for count, idnum in enumerate(secondaryidlist):
-            try:
-                QILarrayenumerated = [(index, row.index(int(idnum)))
-                                      for index, row in enumerate(questionarr) if int(idnum) in row]
-                QILquestionposition = QILarrayenumerated[0][0]
-            except Exception:
-                print("Could not match the Sergeant ID back to the QIL. Please ensure that Question ID: " +
-                      str(idnum) + " is present in the QIL document.")
-            # + 1 is to account for Question ID column, since languages are counted from survey invitation page
-            if questionarr[QILquestionposition][languagenumber] is not None:
-                replacetext = questionarr[QILquestionposition][languagenumber]
-                sergeantquestiontextlist[sergeantidpos].clear()
-                sergeantquestiontextlist[sergeantidpos].send_keys(replacetext)
-                questionid_count += 1
-                sergeantidpos += 1
-                logginginfoedit()
-                # This checks to see if we are on first page, then saves and clicks next.
-                if int(sergeantquestionidlist[0].text) == int(16595):
+# edittextarea = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+#     (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')][@placeholder='" + (questionlistobject[2]) + "']/following::strong[position()=2 and contains(text(),'" + (questionlistobject[1]) + "')]")))
+
+pagechangecount = 0
+processing_qil = True
+while processing_qil is True:
+    deleting_questions = True
+    adding_questions = True
+    editing_questions = True
+    while deleting_questions is True:
+        numofdeletions = [x for x in questionarr if x[2] is None and x[1] is not None]
+        for counter, questionlistobject in enumerate(questionarr):
+            if questionlistobject[2] is None and questionlistobject[1] is not None:
+                # Click the delete toggle
+                try:
+                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
+                    print(counter, "Question ID: " +
+                          str(questionlistobject[1]) + " was toggled Delete = ON.")
+                except Exception:
+                    print("Going to next page for Question ID:  " +
+                          str(questionlistobject[1]))
+                    pagechangecount += 1
                     savepage()
                     clicknext()
-                    pagechangecount += 1
-                    questionid_count = 0
-                    sergeantidpos = 0
-                    time.sleep(8)
-                # This checks if we have edited the last question of page 2, then saves and clicks next
-                elif questionid_count == len(sergeantquestionidlist) and pagechangecount < 2:
-                    savepage()
-                    print("Saving after editing the last question on page 2...")
-                    addcustomquestions()  # Introduce loop here to start adding questions?
-                    clicknext()
-                    pagechangecount += 1
-                    questionid_count = 0
-                    sergeantidpos = 0
-                    time.sleep(3)
-                # This checks to see if the last item in the list was edited, saves and returns to first
-                elif questionid_count == len(sergeantquestionidlist) and pagechangecount == 2:
-                    questionid_count = 1000000000000
-                    savepage()
-                    questions_returntopageone()
-                    time.sleep(2)
-                    break
-            # This checks to ensure we are only deleting questions once and that the cell value object type is None.
-            # This also checks to make sure we are only deleting the questions once (in English, languagenumber == 2)
-            # Will need to insert additional if to catch Toggle status: "Y/N"
-            elif languagenumber == 2 and questionarr[QILquestionposition][languagenumber] is None:
-                toggledeletelist[sergeantidpos].click()
-                questionid_count += 1
-                sergeantidpos += 1
-                # This checks to see if we are deleting the last question on page 3 then returns us to first page
-                # and breaks out of the loop altogether
-                if questionid_count == len(sergeantquestionidlist) and pagechangecount == 2:
-                    savepage()
-                    questions_returntopageone()  # Introduce loop here to start adding questions?
-                    logginginfodelete()
-                    time.sleep(2)
-                    questionid_count = 1000000000000
-                    break
-                # Checks to see if we are deleting the last question of page 2 and then saves and clicks next
-                elif questionid_count == len(sergeantquestionidlist) and pagechangecount == 1:
-                    savepage()
-                    print("Saving after deleting the last question on page 2...")
-                    addcustomquestions()  # Introduce loop here to start adding questions?
-                    clicknext()
-                    time.sleep(2)
-                    pagechangecount += 1
-                    questionid_count = 0
-                    sergeantidpos = 0
-                logginginfodelete()
-            # else:
-            #     for textcounter, wordtext in secondarylistofquestions:
-            #         qiltextmatch = [(index, row.index(str(wordtext)))
-            #                         for index, row in enumerate(questionarr) if wordtext in row]
-            #         qiltextmatchposition = qiltextmatch[0][0]
-print("--- %s seconds ---" % (time.time() - start_time))
+                    # check for visibility of the delete toggle associated with our question ID
+                    WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]")))
+                    # click aforementioned delete toggle if visible.
+                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(
+                        questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
+                    continue
+        savepage()
+        click_prev()
+        deleting_questions = False
+    while adding_questions is True:
+        questiondrivernames = WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.XPATH, "//*[@id='survey_pages_attributes_0_page_questions_attributes_0_title']/following::h4[not(@*)]")))
+        secondarydrivernamelist = [x.text for x in questiondrivernames]
+        # for x in questiondrivernames:
+        #     secondarydrivernamelist.append(x.text)
+        # You may have to 'click' the question text area first and then call send_keys for the question text
+        for i, excelrowlistobject in enumerate(questionarr):
+            if excelrowlistobject[1] is None and excelrowlistobject[2] is not None:
+                # OR condition to check for Y/N toggle for custom question where ID is present
+                if excelrowlistobject[2] == "Empty Slot":
+                    continue
+                else:
+                    for drivername in secondarydrivernamelist:
+                        if excelrowlistobject[0] == drivername:
+                            # print(type(drivername))
+                            # Click the Add Question Button following the driver name match
+                            WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                                (By.XPATH, "//h4[not(@*) and contains(text(),'" + excelrowlistobject[0] + "')]/following::button[position()=1]"))).click()
+                            # Instantiate AddQuestionTextArea
+                            addquestiontextarea = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+                                (By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/div[@class='selectize-control grouped_select optional single']/div/input")))
+                            # Send question text to text area field
+                            addquestiontextarea.send_keys(excelrowlistobject[2])
+                            # Click Save
+                            clickercounter = 1
+                            while clickercounter < 2:
+                                try:
+                                    driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
+                                    WebDriverWait(driver, 2).until(
+                                        EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
+                                except Exception:
+                                    print("Have attempted: " +
+                                          str(clickercounter) + " save button clicks")
+                                    clickercounter += 1
+                                    continue
+                                # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
+                            newcustomquestionid = WebDriverWait(driver, 10).until(
+                                EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
+                            # //textarea[contains(text(),)]/following: : strong[position() = 2]
+                            # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
+                            for counter, qilrowlistobject in enumerate(questionarr):
+                                if excelrowlistobject[2] == questionarr[counter][2]:
+                                    insertcustomidtoarray = newcustomquestionid.text
+                                    questionarr[counter][1] = insertcustomidtoarray
+            print(questionarr[i][1])
+        adding_questions = False
+        processing_qil = False
+    # while editing_questions = True:
+        # questions_returntopageone()
+
+# condition = True
+# questionid_count = 0
+# pagechangecount = 0
+# sergeantidpos = 0
+# languagenumber = 2
+# languagedropdownposition = 0
+#
+# while condition is True:
+#     # This checks to see if we have finished processing a language
+#     # totallanguagecount - 1 accounts for the fact we start on the English language page
+#     # if pagechangecount == 2 and languagedropdownposition < totallanguagecount - 1:
+#     if pagechangecount == 2 and totallanguagecount > 1:
+#         questionid_count = 0
+#         sergeantidpos = 0
+#         pagechangecount = 0
+#         languagenumber += 1
+#         languagedropdownposition += 1
+#         changelanguage()
+#         clickswitch()
+#         time.sleep(2)
+#         print("Language changed to: ",
+#               emailinvitationarray[0][languagedropdownposition])
+#     # This checks that all languages in the dropdown have been processed
+#     elif pagechangecount == 2 and languagedropdownposition >= totallanguagecount - 1:
+#         condition = False
+#         questions_returntopageone()
+#         print('Done!')
+#         break
+#     while questionid_count <= len(questionarr):
+#         secondaryidlist = []
+#         toggledeletelist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+#             (By.XPATH, "//*[starts-with(@class,'move-content sortable-disabled')]/div[@class='row']/div/div")))
+#         sergeantquestionidlist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+#             (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong")))
+#         sergeantquestiontextlist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+#             (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong/ancestor::div/textarea[starts-with(@class,'question-text-area sortable-disabled question')]")))
+#         # Creating a secondary list of id's to improve speed when we go to match against the ID in the QIL
+#         secondarylistofquestions = [i.text for i in sergeantquestiontextlist]
+#         secondaryidlist = [questionid.text for questionid in sergeantquestionidlist]
+#         # for questionid in sergeantquestionidlist:
+#         #     secondaryidlist.append(questionid.text)
+#         for count, idnum in enumerate(secondaryidlist):
+#             try:
+#                 QILarrayenumerated = [(index, row.index(int(idnum)))
+#                                       for index, row in enumerate(questionarr) if int(idnum) in row]
+#                 QILquestionposition = QILarrayenumerated[0][0]
+#             except Exception:
+#                 print("Could not match the Sergeant ID back to the QIL. Please ensure that Question ID: " +
+#                       str(idnum) + " is present in the QIL document.")
+#             # + 1 is to account for Question ID column, since languages are counted from survey invitation page
+#             if questionarr[QILquestionposition][languagenumber] is not None:
+#                 replacetext = questionarr[QILquestionposition][languagenumber]
+#                 sergeantquestiontextlist[sergeantidpos].clear()
+#                 sergeantquestiontextlist[sergeantidpos].send_keys(replacetext)
+#                 questionid_count += 1
+#                 sergeantidpos += 1
+#                 logginginfoedit()
+#                 # This checks to see if we are on first page, then saves and clicks next.
+#                 if int(sergeantquestionidlist[0].text) == int(16595):
+#                     savepage()
+#                     clicknext()
+#                     pagechangecount += 1
+#                     questionid_count = 0
+#                     sergeantidpos = 0
+#                     time.sleep(8)
+#                 # This checks if we have edited the last question of page 2, then saves and clicks next
+#                 elif questionid_count == len(sergeantquestionidlist) and pagechangecount < 2:
+#                     savepage()
+#                     print("Saving after editing the last question on page 2...")
+#                     addcustomquestions()  # Introduce loop here to start adding questions?
+#                     clicknext()
+#                     pagechangecount += 1
+#                     questionid_count = 0
+#                     sergeantidpos = 0
+#                     time.sleep(3)
+#                 # This checks to see if the last item in the list was edited, saves and returns to first
+#                 elif questionid_count == len(sergeantquestionidlist) and pagechangecount == 2:
+#                     questionid_count = 1000000000000
+#                     savepage()
+#                     questions_returntopageone()
+#                     time.sleep(2)
+#                     break
+#             # This checks to ensure we are only deleting questions once and that the cell value object type is None.
+#             # This also checks to make sure we are only deleting the questions once (in English, languagenumber == 2)
+#             # Will need to insert additional if to catch Toggle status: "Y/N"
+#             elif languagenumber == 2 and questionarr[QILquestionposition][languagenumber] is None:
+#                 toggledeletelist[sergeantidpos].click()
+#                 questionid_count += 1
+#                 sergeantidpos += 1
+#                 # This checks to see if we are deleting the last question on page 3 then returns us to first page
+#                 # and breaks out of the loop altogether
+#                 if questionid_count == len(sergeantquestionidlist) and pagechangecount == 2:
+#                     savepage()
+#                     questions_returntopageone()  # Introduce loop here to start adding questions?
+#                     logginginfodelete()
+#                     time.sleep(2)
+#                     questionid_count = 1000000000000
+#                     break
+#                 # Checks to see if we are deleting the last question of page 2 and then saves and clicks next
+#                 elif questionid_count == len(sergeantquestionidlist) and pagechangecount == 1:
+#                     savepage()
+#                     print("Saving after deleting the last question on page 2...")
+#                     addcustomquestions()  # Introduce loop here to start adding questions?
+#                     clicknext()
+#                     time.sleep(2)
+#                     pagechangecount += 1
+#                     questionid_count = 0
+#                     sergeantidpos = 0
+#                 logginginfodelete()
+#             # else:
+#             #     for textcounter, wordtext in secondarylistofquestions:
+#             #         qiltextmatch = [(index, row.index(str(wordtext)))
+#             #                         for index, row in enumerate(questionarr) if wordtext in row]
+#             #         qiltextmatchposition = qiltextmatch[0][0]
+# print("--- %s seconds ---" % (time.time() - start_time))
 
 # https://stackoverflow.com/questions/27175400/how-to-find-the-index-of-a-value-in-2d-array-in-python
 # https://stackoverflow.com/questions/11223011/attributeerror-list-object-has-no-attribute-click-selenium-webdriver
