@@ -13,7 +13,6 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
 import re
-import AddQuestionCode
 
 # ***********************Start timer, load workbook, ask input********************************************************
 # ***********************Start timer, load workbook, ask input********************************************************
@@ -271,7 +270,7 @@ def addcustomquestions():
                         # Send question text to text area field
                         addquestiontextarea.send_keys(excelrowlistobject[2])
                         # Click Save
-                        clickercounter = 0
+                        clickercounter = 1
                         while clickercounter < 2:
                             try:
                                 WebDriverWait(driver, 4).until(
@@ -305,7 +304,7 @@ sergeantlistdeletetoggleposition = 0
 scanningforquestiongroups = True
 while scanningforquestiongroups is True:
     try:
-        questiongroupsobjects = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+        questiongroupsobjects = WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
             (By.XPATH, "//h6[contains(text(),'Question Group Title')]")))
         findquestiongroups = WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.XPATH, "//h6[contains(text(),'Question Group Title')]")))
