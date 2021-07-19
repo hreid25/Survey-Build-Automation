@@ -199,8 +199,8 @@ def questions_returntopageone():
         print(str(q))
 
 
-# McLean Logo typically intercepts the click when we go to save, return to page one and occassionally when we click next
-# depending on where we are on the page.
+# McLean Logo typically intercepts the click when we go to save, or click. Return to page one and occassionally when we click next
+# depending on where we are on the page. It's best to click the save/next/'1'/'2' buttons at the same navbar position. (top, usually).
 # selenium.common.exceptions.ElementClickInterceptedException: Message: element click intercepted:
 # Element <a data-remote="true" href="/engagement/surveys/39515/edit?tab=questions">...</a> is not clickable at point
 #  (368, 15). Other element would receive the click:
@@ -234,6 +234,10 @@ def clickswitch():
         By.XPATH, "//*[@class='tab-pane active']/div[@class='row']/div/form/child::input[@type='submit']"))).click()
 
 
+def checkpagetitle():
+    page_title = WebDriverWait(driver, 60).until(EC.presence_of_element_located((
+        By.XPATH, "//*[@id='page-list']/div/li/fieldset[1]/h5[1]")))
+    return str(page_title.text)
 # def logginginfodelete():
 #     print("----------------------------------------------------------------")
 #     print("Question ID: " + str(idnum) + " at QIL array position: " +
@@ -351,9 +355,6 @@ while processing_qil is True:
         questiondrivernames = WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.XPATH, "//*[@id='survey_pages_attributes_0_page_questions_attributes_0_title']/following::h4[not(@*)]")))
         secondarydrivernamelist = [x.text for x in questiondrivernames]
-        # for x in questiondrivernames:
-        #     secondarydrivernamelist.append(x.text)
-        # You may have to 'click' the question text area first and then call send_keys for the question text
         for i, excelrowlistobject in enumerate(questionarr):
             if excelrowlistobject[1] is None and excelrowlistobject[2] is not None:
                 # OR condition to check for Y/N toggle for custom question where ID is present
@@ -376,11 +377,11 @@ while processing_qil is True:
                             while clickercounter < 2:
                                 try:
                                     driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
-                                    WebDriverWait(driver, 2).until(
+                                    WebDriverWait(driver, 1).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
                                         EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
                                 except Exception:
-                                    print("Have attempted: " +
-                                          str(clickercounter) + " save button clicks")
+                                    print("Have attempted to click the save button: " +
+                                          str(clickercounter) + " times.")
                                     clickercounter += 1
                                     continue
                                 # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
@@ -394,9 +395,29 @@ while processing_qil is True:
                                     questionarr[counter][1] = insertcustomidtoarray
             print(questionarr[i][1])
         adding_questions = False
-        processing_qil = False
-    # while editing_questions = True:
-        # questions_returntopageone()
+    while editing_questions is True:
+        columnnumber = 2
+        questions_returntopageone()
+        for edit_counter, qilrowlistobj in enumerate(questionarr):
+            sergeant_questionid_element = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+                (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']")))
+            if qilrowlistobj[1] == sergeant_questionid_element:
+                try:
+                    sergeant_question_text_element = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+                        (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']/ancestor::div[position()=4]/textarea")))
+                    QILarrayenumerated = [(index, row.index(int(qilrowlistobj[1])))
+                                          for index, row in enumerate(questionarr) if int(qilrowlistobj[1]) in row]
+                    question_position_rownum = QILarrayenumerated[0][0]
+                    sergeant_question_text_element.clear()
+                    sergeant_question_text_element.send_keys(
+                        questionarr[question_position_rownum][columnnumber])
+                except Exception as edit_error:
+                    print(edit_error)
+                    savepage()
+                    clicknext()
+    processing_qil = False
+    editing_questions = False
+print("--- %s seconds ---" % (time.time() - start_time))
 
 # condition = True
 # questionid_count = 0
@@ -439,22 +460,22 @@ while processing_qil is True:
 #         secondaryidlist = [questionid.text for questionid in sergeantquestionidlist]
 #         # for questionid in sergeantquestionidlist:
 #         #     secondaryidlist.append(questionid.text)
-#         for count, idnum in enumerate(secondaryidlist):
-#             try:
-#                 QILarrayenumerated = [(index, row.index(int(idnum)))
-#                                       for index, row in enumerate(questionarr) if int(idnum) in row]
-#                 QILquestionposition = QILarrayenumerated[0][0]
-#             except Exception:
-#                 print("Could not match the Sergeant ID back to the QIL. Please ensure that Question ID: " +
-#                       str(idnum) + " is present in the QIL document.")
-#             # + 1 is to account for Question ID column, since languages are counted from survey invitation page
-#             if questionarr[QILquestionposition][languagenumber] is not None:
-#                 replacetext = questionarr[QILquestionposition][languagenumber]
-#                 sergeantquestiontextlist[sergeantidpos].clear()
-#                 sergeantquestiontextlist[sergeantidpos].send_keys(replacetext)
-#                 questionid_count += 1
-#                 sergeantidpos += 1
-#                 logginginfoedit()
+# for count, idnum in enumerate(secondaryidlist):
+#     try:
+#         QILarrayenumerated = [(index, row.index(int(idnum)))
+#                               for index, row in enumerate(questionarr) if int(idnum) in row]
+#         QILquestionposition = QILarrayenumerated[0][0]
+#     except Exception:
+#         print("Could not match the Sergeant ID back to the QIL. Please ensure that Question ID: " +
+#               str(idnum) + " is present in the QIL document.")
+#     # + 1 is to account for Question ID column, since languages are counted from survey invitation page
+#     if questionarr[QILquestionposition][languagenumber] is not None:
+#         replacetext = questionarr[QILquestionposition][languagenumber]
+#         sergeantquestiontextlist[sergeantidpos].clear()
+#         sergeantquestiontextlist[sergeantidpos].send_keys(replacetext)
+#         questionid_count += 1
+#         sergeantidpos += 1
+#         logginginfoedit()
 #                 # This checks to see if we are on first page, then saves and clicks next.
 #                 if int(sergeantquestionidlist[0].text) == int(16595):
 #                     savepage()
