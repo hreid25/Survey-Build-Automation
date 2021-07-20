@@ -1,20 +1,19 @@
 import openpyxl
 import time
-import logging
+# import logging
 from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import Select
+# from selenium.webdriver.common.keys import Keys
+# from selenium.webdriver.common.action_chains import ActionChains
+# from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import StaleElementReferenceException
-from selenium.common.exceptions import ElementClickInterceptedException
+# from selenium.common.exceptions import NoSuchElementException
+# from selenium.common.exceptions import StaleElementReferenceException
+# from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
-import re
-from selenium.webdriver.common.by import By
-
+# import re
+# from selenium.webdriver.common.by import By
 
 # ***********************Start timer, load workbook, ask input********************************************************
 # ***********************Start timer, load workbook, ask input********************************************************
@@ -91,10 +90,11 @@ driver_match_scan = True
 while driver_match_scan is True:
     # Read in table data
     all_the_drivers = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
-        (By.XPATH, "//*[@id='report-question-groups-table']/tbody/tr")))
+        (By.XPATH, "//*[@id='report-question-groups-table']/tbody/tr/td[position()<3]")))
     # Create secondary list obj
-    prettyname_slugname = [(x.text[0], x.text[1]) for x in all_the_drivers]
-    print(prettyname_slugname)
+    # prettyname_slugname = [[x.text for x in all_the_drivers] for i in all_the_drivers]
+    prettyname_slugname = [x.text for x in all_the_drivers]
+    # print(prettyname_slugname)
     for counter, myvar in enumerate(prettyname_slugname):
         if myvar not in final_list:
             final_list.append(myvar)
@@ -113,14 +113,13 @@ while driver_match_scan is True:
                 # Return to page one
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
                     (By.XPATH, "//*[@class='pagination']/li[@class='first']/a"))).click()
-print(final_list)
-# https://stackoverflow.com/questions/2397141/how-to-initialize-a-two-dimensional-array-in-python
-# https://docs.python.org/3/tutorial/datastructures.html#dictionaries
-# dropdown
-# //*[@id = "edit-tabs-dropdown"]
-# Select.option("Question Groups (Drivers)")
-# print("--- %s seconds ---" % (time.time() - start_time))
-# textarea for title, slug and question id
-# //*[@id = "report-question-groups-table"]/tbody/tr
+editquestions = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.LINK_TEXT, 'Questions'))).click()
+prettyname_slugname_dict = {final_list[i]: final_list[i + 1] for i in range(0, len(final_list), 2)}
 
-# //*[@id = "report-question-groups"]/div[1]/div/ul/li[4]
+for counter, excelrowlistobj in enumerate(questionarr):
+    for key, value in prettyname_slugname_dict.items():
+        if excelrowlistobj[0] == str(key):
+            slugreplace = value.replace("_", " ").title()
+            # call .get on the key's value, use replace method to remove underscores "_"
+            # and pass that variable into the add questions xpath to find correct spot.
