@@ -124,7 +124,7 @@ print(current_sergeant_question_id_list)
 print("--- %s seconds ---" % (time.time() - start_time))
 # handle conditions for when to delete or not delete.
 # for i, excelrowlistsobject in enumerate(questionarr):
-#      if excelrowlistobject[1] not in current_sergeant_question_id_list:
+#      if excelrowlistobject[1] not in all_my_sergeant_ids:
 #           continue
 #       elif excelrowlistobject[2] == "Empty Slot":
 #           continue
