@@ -113,13 +113,14 @@ while driver_match_scan is True:
                 # Return to page one
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
                     (By.XPATH, "//*[@class='pagination']/li[@class='first']/a"))).click()
-editquestions = WebDriverWait(driver, 10).until(
-    EC.element_to_be_clickable((By.LINK_TEXT, 'Questions'))).click()
+# CLICK EDIT QUESTIONS PAGE AFTER THE WHILE LOOP COMPLETES
 prettyname_slugname_dict = {final_list[i]: final_list[i + 1] for i in range(0, len(final_list), 2)}
-
+print(prettyname_slugname_dict)
 for counter, excelrowlistobj in enumerate(questionarr):
     for key, value in prettyname_slugname_dict.items():
-        if excelrowlistobj[0] == str(key):
-            slugreplace = value.replace("_", " ").title()
+        if excelrowlistobj[1] == key:
+            slugreplace = value.replace("_", " ")
+            print(slugreplace)
+
             # call .get on the key's value, use replace method to remove underscores "_"
             # and pass that variable into the add questions xpath to find correct spot.

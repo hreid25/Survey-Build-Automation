@@ -213,7 +213,7 @@ def click_next():
     try:
         WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
             (By.XPATH, "//*[@id='survey-edit-questions']/child::div[3]/div/ul/child::li[@class='next']/a"))).click()
-    except ElementClickInterceptedException or StaleElementReferenceException or NoSuchElementException as c:
+    except Exception as c:
         WebDriverWait(driver, 20).until(EC.invisibility_of_element(
             (By.XPATH, "//sergeant-uploads1.s3.amazonaws.com/sergeant/brands/production/2/hr-logo.svg?1499654030")))
         driver.execute_script("arguments[0].click();", WebDriverWait(driver, 20).until(
@@ -281,25 +281,6 @@ def checkpagetitle():
     this_page = WebDriverWait(driver, 60).until(EC.presence_of_element_located((
         By.XPATH, "//*[@id='page-list']/div/li/fieldset[1]/h5[1]")))
     return str(this_page.text)
-# def logginginfodelete():
-#     print("----------------------------------------------------------------")
-#     print("Question ID: " + str(idnum) + " at QIL array position: " +
-#           str(QILarrayenumerated) + " is None and was toggled to 'Delete'")
-#     print("Question Counter = " + str(questionid_count), " Sergeant Toggle Pos = " +
-#           str(sergeantidpos) + " Total Delete Buttons: " + str(len(toggledeletelist)))
-#     print("Page Chg Count: ", pagechangecount)
-#     print("----------------------------------------------------------------")
-#
-#
-# def logginginfoedit():
-#     print("----------------------------------------------------------------")
-#     print("Question ID: " + str(idnum) + " at QIL array position: " +
-#           str(QILarrayenumerated) + " was edited")
-#     print("Question Counter = " + str(questionid_count), " Sergeant ID Pos = " +
-#           str(sergeantidpos))
-#     print("Page Chg Count: ", pagechangecount, 'Language: ',
-#           emailinvitationarray[0][languagedropdownposition])
-#     print("----------------------------------------------------------------")
 
 
 # ***********************REMOVE SENIOR MANAGEMENT QUESTIONS GROUPING*****************************************************************************************
@@ -387,7 +368,10 @@ while processing_qil is True:
                     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(
                         questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
                     continue
-                # introduce finally loop to handle all other edge cases? return to page two, set deleting_questions = false
+                # introduce finally loop to handle all other edge cases. return to page two, set deleting_questions = false
+                # rotate through all pages gathering sergeantid's. then compare those to each questionlistobject[1]. If the object is not in them
+                # list then skip that ID.
+
         save_page()
         click_prev()
         deleting_questions = False
