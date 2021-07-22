@@ -391,6 +391,7 @@ while processing_qil is True:
             #  and questionlistobject[1] in current_sergeant_question_id_list
             elif questionlistobject[2] is None and questionlistobject[1] is not None and str(questionlistobject[1]) in current_sergeant_question_id_list:
                 try:
+                    # Click delete
                     WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
                         (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
                     print(counter, "Question ID: " +
@@ -459,7 +460,7 @@ while processing_qil is True:
                                   str(clickercounter) + " times.")
                             clickercounter += 1
                             continue
-                        # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
+                        # Grab the Question ID of the new question and add it to questionarr[questionnum][1]. We do this by passing the question text through the xpath
                     newcustomquestionid = WebDriverWait(driver, 10).until(
                         EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
                     # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
@@ -474,6 +475,7 @@ while processing_qil is True:
         return_home()  # recently added without testing
         questions_returntopageone()
         for edit_counter, qilrowlistobj in enumerate(questionarr):
+            # passing the question id through the text area element to make sure properly updating
             sergeant_questionid_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
                 (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']")))
             if qilrowlistobj[1] == sergeant_questionid_element:

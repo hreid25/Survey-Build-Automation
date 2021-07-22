@@ -339,16 +339,22 @@ while processing_qil is True:
     editing_questions = True
     while adding_questions is True:
         # Collect Question driver names from page
-        questiondrivernames = WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.XPATH, "//*[@id='survey_pages_attributes_0_page_questions_attributes_0_title']/following::h4[not(@*)]")))
-        secondarydrivernamelist = [x.text for x in questiondrivernames]
+        # questiondrivernames = WebDriverWait(driver, 10).until(
+        #     EC.presence_of_all_elements_located((By.XPATH, "//*[@id='survey_pages_attributes_0_page_questions_attributes_0_title']/following::h4[not(@*)]")))
+        # secondarydrivernamelist = [x.text for x in questiondrivernames]
         for i, excelrowlistobject in enumerate(questionarr):
             if excelrowlistobject[1] is None and excelrowlistobject[2] is not None:
                 # OR condition to check for Y/N toggle for custom question where ID is present
                 if excelrowlistobject[2] == "Empty Slot":
                     continue
+                # Check to see if question has already been added, and then add custom id into the array.
                 if str(excelrowlistobject[2]) in scanned_sergeant_question_text:
-                    print('this object is being skipped: ', excelrowlistobject[2])
+                    print('this question already exists in this survey: ', excelrowlistobject[2])
+                    newcustomquestionid = WebDriverWait(driver, 10).until(
+                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
+                    insertcustomidtoarray = newcustomquestionid.text
+                    questionarr[i][1] = insertcustomidtoarray
+                    print(questionarr[i][1], questionarr[i][2])
                     continue
                 for key, value in prettyname_slugname_dict.items():
                     if excelrowlistobject[0] == str(key):
@@ -369,18 +375,22 @@ while processing_qil is True:
                             driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
                             WebDriverWait(driver, 1).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
                                 EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
-                        except Exception:
-                            print("Have attempted to click the save button: " +
-                                  str(clickercounter) + " times.")
+                        except Exception as add_question_error:
+                            print('There was an issue adding a question.', add_question_error)
                             clickercounter += 1
                             continue
                         # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
                     newcustomquestionid = WebDriverWait(driver, 10).until(
                         EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
                     # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
-                    for counter, qilrowlistobject in enumerate(questionarr):
-                        if excelrowlistobject[2] == questionarr[counter][2]:
-                            insertcustomidtoarray = newcustomquestionid.text
-                            questionarr[counter][1] = insertcustomidtoarray
-            # print(questionarr[i][1])
-    adding_questions = False
+                # for counter, qilrowlistobject in enumerate(questionarr):
+                #     if excelrowlistobject[2] == questionarr[counter][2]:
+                #         insertcustomidtoarray = newcustomquestionid.text
+                #         questionarr[counter][1] = insertcustomidtoarray
+                #     print(questionarr[counter][1], questionarr[counter][2])
+        print("Done adding questions...")
+        adding_questions = False
+        processing_qil = False
+
+# for countingagain, i in enumerate(questionarr):
+#     print(countingagain, i[1], i[2])
