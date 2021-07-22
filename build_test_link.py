@@ -145,10 +145,10 @@ linkElemEng.click()
 # surveyname = input("Enter the name of your survey as it appears in Sergeant: ")
 surveyname = "Survey Automation Testing"
 
+# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
+# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
+# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
 
-# **********************************GENERATE DRIVER SLUG MATCH********************************************************
-# **********************************GENERATE DRIVER SLUG MATCH********************************************************
-# **********************************GENERATE DRIVER SLUG MATCH********************************************************
 
 searchforsurvey = driver.find_element_by_xpath(
     "//*[@id='q_translations_name_or_reseller_name_or_user_company_name_cont']")
@@ -164,6 +164,9 @@ WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
 WebDriverWait(driver, 20).until(EC.presence_of_element_located(
     (By.XPATH, "//*[@id='report-question-groups-nav']/a"))).click()
 
+# **********************************GENERATE DRIVER SLUG MATCH********************************************************
+# **********************************GENERATE DRIVER SLUG MATCH********************************************************
+# **********************************GENERATE DRIVER SLUG MATCH********************************************************
 chgpage = 1
 final_list = []
 driver_match_scan = True
@@ -198,10 +201,6 @@ prettyname_slugname_dict = {final_list[i]: final_list[i + 1] for i in range(0, l
 
 editquestions = WebDriverWait(driver, 10).until(
     EC.element_to_be_clickable((By.LINK_TEXT, 'Questions'))).click()
-
-# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
-# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
-# ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
 
 
 # *************************************CUSTOM FUNCTIONS***************************************************************************
@@ -388,7 +387,7 @@ while processing_qil is True:
             if str(questionlistobject[1]) not in current_sergeant_question_id_list:
                 print("we skipped: ", counter, questionlistobject[1])
                 continue
-            #  and questionlistobject[1] in current_sergeant_question_id_list
+            # Another if condition in here to check the toggle status (Y/N)
             elif questionlistobject[2] is None and questionlistobject[1] is not None and str(questionlistobject[1]) in current_sergeant_question_id_list:
                 try:
                     # Click delete
@@ -414,13 +413,13 @@ while processing_qil is True:
                         print(
                             "Some other condition has been triggered when trying to delete questions: ", my_error)
                         deleting_questions = False
-                        # processing_qil = False
                         break
             elif counter == len(questionarr) - 1:
                 print('Question Deletion has completed!')
                 save_page()
-                # Return to first page
+                # Return to top of page (ctrl + home)
                 return_home()
+                # click page 1
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
                     (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
                 deleting_questions = False

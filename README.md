@@ -16,20 +16,26 @@ Example: {{"Executive Team (The CEO,CIO,CFO,COO)" | hover}}
 
 3. Creates Chrome driver and gets us the Sergeant address (needs to first call gets against the info tech login page). 
 Note the user must be logged into Connect or Sergeant already in order for the program to work. The user will need to 
-authenticate using the secure app installed on your phone.
+authenticate using the secure app installed on your phone. Chrome Driver is loaded using the default Chrome user data. Whatever
+profile is loaded needs to be logged in already and have credentials saved on their browser.
 
-4. Program then checks against Page 2 to ensure that we are ungrouping (selecting delete toggles) the senior management relationships
-driver. This element is tricky for a few reasons, in that delete and edit commits wont be saved the first time over.
-Removing this was deemed necessary as it was critical if we were to then delete, add and edit questions more easily.
+4. The program will check all 'pretty names' and 'slug names' for drivers on a given survey. These are grouped as key, value pairs
+in order to return a match when we go to add questions (click the appropriate Add question toggle).
 
-5. Program goes onto delete questions on page 2 and 3 (EXM question is never removed for PEP, Full Eng or Pulse). This 
-works by checking if a question id is present and its adjacent cell is NoneType. Then toggles delete in Sergeant.
+5. The program will then scan all three pages of the full engagement survey and build a list of those for comparison. We should be able to
+skip questions already added to the survey, or skip deletions if a question has already been deleted.
 
-6. We then begin adding questions, matching the question ids from the array to the driver and running a few checks
-to grab the question text from the QIL. We then need to grab the newly created custom question id and reinsert that 
-into our array.
+6. Program then checks against Page 2 to ensure that we are ungrouping (selecting delete toggles) the senior management relationships
+driver. This element is tricky for a few reasons, in that delete and edit commits wont be saved the first time over while the questions
+are still in a group. Reduces chances of error in future blocks.
 
-7. Editing questions is last, starting on page 1 and cycling through all on page 2 and 3. Saving on each page, it will then return
+7. Program goes onto delete questions on page 2 and 3 (EXM question is never removed for PEP, Full Eng or Pulse). This 
+works by checking if a question id is present and its adjacent cell is NoneType. Based on this it then toggles the delete in Sergeant.
+
+8. We then add questions to the survey based on the key, value pairs corresponding to our excelrowlistobject's value. If we have a match,
+we return the slug's name, pass that through to the XPATH to find the right Add Question button and send the text and click save.
+
+9. Editing questions is last, starting on page 1 and cycling through all on page 2 and 3. Saving on each page, it will then return
 us to the last page and will now change languages and repeat this loop until all languages have been completed. Note here:
 questions added and deleted in English, will be cause them to be removed from all other languages present.
 
@@ -38,4 +44,4 @@ The amount of time spent by Project Coordinators copying and pasting for multili
 surveys is substantial. The primary goal of this program is to effectively eliminate or substantially reduce 
 low-effort, redundant work. Secondary goals are to eliminate the incidence of human error in question deletion, 
 pasting incorrectly, or other inconsistencies which places effort on the development team to re-add those questions
-back into the web platform Sergeant.
+back into Sergeant.

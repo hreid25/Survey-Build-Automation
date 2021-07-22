@@ -359,8 +359,11 @@ while processing_qil is True:
                 for key, value in prettyname_slugname_dict.items():
                     if excelrowlistobject[0] == str(key):
                         slug_driver_name = value.replace("_", " ").title()
-                # Click the Add Question Button following the driver name match
                 else:
+                    # Click add question btn (likely erroring out because its trying to click the next add question button while the fade in is still present)
+                    # May need to call webdriverwait on the fade in xpath
+                    print('slug_driver_name: ', slug_driver_name,
+                          'question to be added: ', excelrowlistobject[2])
                     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
                         (By.XPATH, "//h4[not(@*) and contains(text(),'" + str(slug_driver_name) + "')]/following::button[position()=1]"))).click()
                     # Instantiate AddQuestionTextArea
@@ -368,20 +371,19 @@ while processing_qil is True:
                         (By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/div[@class='selectize-control grouped_select optional single']/div/input")))
                     # Send question text to text area field
                     addquestiontextarea.send_keys(excelrowlistobject[2])
-                    # Click Save
                     clickercounter = 1
                     while clickercounter < 2:
                         try:
+                            # Click Save
                             driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
-                            WebDriverWait(driver, 1).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
+                            WebDriverWait(driver, 2).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
                                 EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
-                        except Exception as add_question_error:
-                            print('There was an issue adding a question.', add_question_error)
+                        except Exception:
                             clickercounter += 1
                             continue
                         # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
-                    newcustomquestionid = WebDriverWait(driver, 10).until(
-                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
+                    # newcustomquestionid = WebDriverWait(driver, 10).until(
+                    #     EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
                     # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
                 # for counter, qilrowlistobject in enumerate(questionarr):
                 #     if excelrowlistobject[2] == questionarr[counter][2]:
@@ -392,5 +394,5 @@ while processing_qil is True:
         adding_questions = False
         processing_qil = False
 
-# for countingagain, i in enumerate(questionarr):
-#     print(countingagain, i[1], i[2])
+for countingagain, i in enumerate(questionarr):
+    print(countingagain, i[1], i[2])
