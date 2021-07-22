@@ -13,6 +13,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
 import re
+from webdriver_manager.chrome import ChromeDriverManager
 
 # ***********************Start timer, load workbook, ask input********************************************************
 # ***********************Start timer, load workbook, ask input********************************************************
@@ -128,11 +129,11 @@ totallanguagecount = len(emailinvitationarray[0])
 # ****************************************************CREATE CHROME DRIVER************************************************************
 # ****************************************************CREATE CHROME DRIVER*************************************************************
 
-chrome_options = Options()
-chrome_options.add_argument(
+options = Options()
+options.add_argument(
     "user-data-dir=C:\\Users\\haydr\\AppData\\Local\\Google\\Chrome\\User Data")
-driver = webdriver.Chrome(chrome_options=chrome_options)
-
+# driver = webdriver.Chrome(chrome_options=chrome_options)
+driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=options)
 driver.get('https://www.infotech.com/kip')
 driver.get('https://surveys.mcleanco.com/')
 
@@ -376,40 +377,54 @@ print("--- %s seconds ---" % (time.time() - start_time_measure_seniormgt_deletio
 # edittextarea = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
 #     (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')][@placeholder='" + (questionlistobject[2]) + "']/following::strong[position()=2 and contains(text(),'" + (questionlistobject[1]) + "')]")))
 
+pagenum = 1
 processing_qil = True
 while processing_qil is True:
     deleting_questions = True
     adding_questions = True
     editing_questions = True
     while deleting_questions is True:
-        for i, excelrowlistsobject in enumerate(questionarr):
-            if excelrowlistsobject[2] is None and excelrowlistsobject[1] is not None:
-                if excelrowlistsobject[2] == "Empty Slot":
-                    continue
-                elif excelrowlistsobject[1] not in current_sergeant_question_id_list:
-                    continue
-                else:
-                    try:
-                        # Click the delete toggle
-                        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-                            (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(excelrowlistsobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
-                        print(counter, "Question ID: " +
-                              str(excelrowlistsobject[1]) + " was toggled Delete = ON.")
-                    except Exception:
+        for counter, questionlistobject in enumerate(questionarr):
+            if str(questionlistobject[1]) not in current_sergeant_question_id_list:
+                print("we skipped: ", counter, questionlistobject[1])
+                continue
+            #  and questionlistobject[1] in current_sergeant_question_id_list
+            elif questionlistobject[2] is None and questionlistobject[1] is not None and str(questionlistobject[1]) in current_sergeant_question_id_list:
+                try:
+                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
+                    print(counter, "Question ID: " +
+                          str(questionlistobject[1]) + " was toggled Delete = ON.")
+                except Exception as my_error:
+                    if pagenum < 3:
                         save_page()
-                        click_next()
                         print("Going to next page for Question ID:  " +
-                              str(excelrowlistsobject[1]))
-                        # Check for visibility of the delete toggle associated with our question ID
+                              str(questionlistobject[1]))
+                        pagenum += 1
+                        click_next()
+                        # check for visibility of the delete toggle associated with our question ID
                         WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-                            (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(excelrowlistsobject[1]) + "')]")))
+                            (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]")))
                         # click aforementioned delete toggle if visible.
                         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(
-                            excelrowlistsobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
+                            questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
                         continue
-        save_page()
-        click_prev()
-        deleting_questions = False
+                    else:
+                        print(
+                            "Some other condition has been triggered when trying to delete questions: ", my_error)
+                        deleting_questions = False
+                        # processing_qil = False
+                        break
+            elif counter == len(questionarr) - 1:
+                print('Question Deletion has completed!')
+                save_page()
+                # Return to first page
+                return_home()
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+                    (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
+                deleting_questions = False
+                # processing_qil = False
+                break
     while adding_questions is True:
         # Collect Question driver names from page
         questiondrivernames = WebDriverWait(driver, 10).until(
@@ -417,7 +432,7 @@ while processing_qil is True:
         secondarydrivernamelist = [x.text for x in questiondrivernames]
         for i, excelrowlistobject in enumerate(questionarr):
             if excelrowlistobject[1] is None and excelrowlistobject[2] is not None:
-                # OR condition to check for Y/N toggle for custom question where ID is present
+                # OR condition still needed to check for Y/N toggle for custom question present overtop of standard slot
                 if excelrowlistobject[2] == "Empty Slot":
                     continue
                 for key, value in prettyname_slugname_dict.items():

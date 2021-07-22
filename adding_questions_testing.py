@@ -13,6 +13,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
 import re
+from webdriver_manager.chrome import ChromeDriverManager
 
 # ***********************Start timer, load workbook, ask input********************************************************
 # ***********************Start timer, load workbook, ask input********************************************************
@@ -128,11 +129,11 @@ totallanguagecount = len(emailinvitationarray[0])
 # ****************************************************CREATE CHROME DRIVER************************************************************
 # ****************************************************CREATE CHROME DRIVER*************************************************************
 
-chrome_options = Options()
-chrome_options.add_argument(
+options = Options()
+options.add_argument(
     "user-data-dir=C:\\Users\\haydr\\AppData\\Local\\Google\\Chrome\\User Data")
-driver = webdriver.Chrome(chrome_options=chrome_options)
-
+# driver = webdriver.Chrome(chrome_options=chrome_options)
+driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=options)
 driver.get('https://www.infotech.com/kip')
 driver.get('https://surveys.mcleanco.com/')
 
@@ -292,6 +293,7 @@ editquestions = WebDriverWait(driver, 10).until(
 # ***********************GATHER SERGEANT IDS BEFORE EDITING, DELETING OR ADDING*****************************************************************************************
 
 
+current_sergeant_question_text_list = []
 current_sergeant_question_id_list = []
 chgpage = 1
 id_match_scan = True
@@ -299,18 +301,23 @@ while id_match_scan is True:
     # Read in id text
     sergeant_question_id_list = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located(
         (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong")))
+    sergeant_question_text_list = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located(
+        (By.XPATH, "//*[contains(@class,'question-text-area sortable-disabled') and contains(@id,'survey_pages_attributes')]")))
     # Create secondary list obj
     all_my_sergeant_ids = [x.text for x in sergeant_question_id_list]
-    for counter, myvar in enumerate(all_my_sergeant_ids):
-        if myvar not in current_sergeant_question_id_list:
-            current_sergeant_question_id_list.append(str(myvar))
+    all_my_sergeant_q_text = [y.text for y in sergeant_question_text_list]
+    for counter, myid in enumerate(all_my_sergeant_ids):
+        if str(myid) not in current_sergeant_question_id_list:
+            current_sergeant_question_id_list.append(str(myid))
         elif counter == len(all_my_sergeant_ids) - 1:
             try:
+                chgpage += 1
+                # Click next
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
                     (By.XPATH, "//*[@id='survey-edit-questions']/child::div[3]/div/ul/child::li[@class='next']/a"))).click()
+                # Wait for detection next page being active
                 WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
                     (By.XPATH, "//*[contains(@class,'page active')]/a[@data-remote='true' and contains(text(),'" + str(chgpage) + "')]")))
-                chgpage += 1
             except Exception:
                 print("Done retrieving all initial Sergeant ID's.")
                 # Return to first page
@@ -318,60 +325,62 @@ while id_match_scan is True:
                     (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
                 id_match_scan = False
                 break
-print(current_sergeant_question_id_list)
+    for counter, mytxt in enumerate(all_my_sergeant_q_text):
+        if mytxt not in sergeant_question_text_list:
+            current_sergeant_question_text_list.append(mytxt)
 
-# ***********************DELETING, ADDING, AND EDITING QUESTIONS*****************************************************************************************
-# ***********************DELETING, ADDING, AND EDITING QUESTIONS*****************************************************************************************
-# ***********************DELETING, ADDING, AND EDITING QUESTIONS*****************************************************************************************
+scanned_sergeant_question_text = list(set(current_sergeant_question_text_list))
 
-pagenum = 1
+click_prev()
 processing_qil = True
 while processing_qil is True:
     deleting_questions = True
     adding_questions = True
     editing_questions = True
-    while deleting_questions is True:
-        for counter, questionlistobject in enumerate(questionarr):
-            if str(questionlistobject[1]) not in current_sergeant_question_id_list:
-                print("we skipped: ", counter, questionlistobject[1])
-                continue
-            #  and questionlistobject[1] in current_sergeant_question_id_list
-            elif questionlistobject[2] is None and questionlistobject[1] is not None and str(questionlistobject[1]) in current_sergeant_question_id_list:
-                try:
-                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
-                    print(counter, "Question ID: " +
-                          str(questionlistobject[1]) + " was toggled Delete = ON.")
-                except Exception as my_error:
-                    if pagenum < 3:
-                        save_page()
-                        print("Going to next page for Question ID:  " +
-                              str(questionlistobject[1]))
-                        pagenum += 1
-                        click_next()
-                        # check for visibility of the delete toggle associated with our question ID
-                        WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-                            (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]")))
-                        # click aforementioned delete toggle if visible.
-                        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(
-                            questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
-                        continue
-                    else:
-                        print(
-                            "Some other condition has been triggered when trying to delete questions: ", my_error)
-                        deleting_questions = False
-                        # processing_qil = False
-                        break
-            elif counter == len(questionarr) - 1:
-                print('We have liftoff!')
-                save_page()
-                # Return to first page
-                return_home()
-                # Instead of going home, we should go to page '2'
-                WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-                    (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
-                deleting_questions = False
-                # processing_qil = False
-                break
-        # still need to save on the last page and return to page 1 or 2.
-        # deleting_questions = False
+    while adding_questions is True:
+        # Collect Question driver names from page
+        questiondrivernames = WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.XPATH, "//*[@id='survey_pages_attributes_0_page_questions_attributes_0_title']/following::h4[not(@*)]")))
+        secondarydrivernamelist = [x.text for x in questiondrivernames]
+        for i, excelrowlistobject in enumerate(questionarr):
+            if excelrowlistobject[1] is None and excelrowlistobject[2] is not None:
+                # OR condition to check for Y/N toggle for custom question where ID is present
+                if excelrowlistobject[2] == "Empty Slot":
+                    continue
+                if str(excelrowlistobject[2]) in scanned_sergeant_question_text:
+                    print('this object is being skipped: ', excelrowlistobject[2])
+                    continue
+                for key, value in prettyname_slugname_dict.items():
+                    if excelrowlistobject[0] == str(key):
+                        slug_driver_name = value.replace("_", " ").title()
+                # Click the Add Question Button following the driver name match
+                else:
+                    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                        (By.XPATH, "//h4[not(@*) and contains(text(),'" + str(slug_driver_name) + "')]/following::button[position()=1]"))).click()
+                    # Instantiate AddQuestionTextArea
+                    addquestiontextarea = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-body']/child::div[@class='fields']/div/div/div[@class='selectize-control grouped_select optional single']/div/input")))
+                    # Send question text to text area field
+                    addquestiontextarea.send_keys(excelrowlistobject[2])
+                    # Click Save
+                    clickercounter = 1
+                    while clickercounter < 2:
+                        try:
+                            driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
+                            WebDriverWait(driver, 1).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
+                                EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
+                        except Exception:
+                            print("Have attempted to click the save button: " +
+                                  str(clickercounter) + " times.")
+                            clickercounter += 1
+                            continue
+                        # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
+                    newcustomquestionid = WebDriverWait(driver, 10).until(
+                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
+                    # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
+                    for counter, qilrowlistobject in enumerate(questionarr):
+                        if excelrowlistobject[2] == questionarr[counter][2]:
+                            insertcustomidtoarray = newcustomquestionid.text
+                            questionarr[counter][1] = insertcustomidtoarray
+            # print(questionarr[i][1])
+    adding_questions = False

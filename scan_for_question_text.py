@@ -13,6 +13,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
 import re
+from webdriver_manager.chrome import ChromeDriverManager
 
 # ***********************Start timer, load workbook, ask input********************************************************
 # ***********************Start timer, load workbook, ask input********************************************************
@@ -128,11 +129,11 @@ totallanguagecount = len(emailinvitationarray[0])
 # ****************************************************CREATE CHROME DRIVER************************************************************
 # ****************************************************CREATE CHROME DRIVER*************************************************************
 
-chrome_options = Options()
-chrome_options.add_argument(
+options = Options()
+options.add_argument(
     "user-data-dir=C:\\Users\\haydr\\AppData\\Local\\Google\\Chrome\\User Data")
-driver = webdriver.Chrome(chrome_options=chrome_options)
-
+# driver = webdriver.Chrome(chrome_options=chrome_options)
+driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=options)
 driver.get('https://www.infotech.com/kip')
 driver.get('https://surveys.mcleanco.com/')
 
@@ -291,7 +292,7 @@ editquestions = WebDriverWait(driver, 10).until(
 # ***********************GATHER SERGEANT IDS BEFORE EDITING, DELETING OR ADDING*****************************************************************************************
 # ***********************GATHER SERGEANT IDS BEFORE EDITING, DELETING OR ADDING*****************************************************************************************
 
-
+current_sergeant_question_text_list = []
 current_sergeant_question_id_list = []
 chgpage = 1
 id_match_scan = True
@@ -299,18 +300,23 @@ while id_match_scan is True:
     # Read in id text
     sergeant_question_id_list = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located(
         (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong")))
+    sergeant_question_text_list = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located(
+        (By.XPATH, "//*[contains(@class,'question-text-area sortable-disabled') and contains(@id,'survey_pages_attributes')]")))
     # Create secondary list obj
     all_my_sergeant_ids = [x.text for x in sergeant_question_id_list]
-    for counter, myvar in enumerate(all_my_sergeant_ids):
-        if myvar not in current_sergeant_question_id_list:
-            current_sergeant_question_id_list.append(str(myvar))
+    all_my_sergeant_q_text = [y.text for y in sergeant_question_text_list]
+    for counter, myid in enumerate(all_my_sergeant_ids):
+        if str(myid) not in current_sergeant_question_id_list:
+            current_sergeant_question_id_list.append(str(myid))
         elif counter == len(all_my_sergeant_ids) - 1:
             try:
+                chgpage += 1
+                # Click next
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
                     (By.XPATH, "//*[@id='survey-edit-questions']/child::div[3]/div/ul/child::li[@class='next']/a"))).click()
+                # Wait for detection next page being active
                 WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
                     (By.XPATH, "//*[contains(@class,'page active')]/a[@data-remote='true' and contains(text(),'" + str(chgpage) + "')]")))
-                chgpage += 1
             except Exception:
                 print("Done retrieving all initial Sergeant ID's.")
                 # Return to first page
@@ -318,60 +324,13 @@ while id_match_scan is True:
                     (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
                 id_match_scan = False
                 break
-print(current_sergeant_question_id_list)
+    for counter, mytxt in enumerate(all_my_sergeant_q_text):
+        if mytxt not in sergeant_question_text_list:
+            current_sergeant_question_text_list.append(mytxt)
 
-# ***********************DELETING, ADDING, AND EDITING QUESTIONS*****************************************************************************************
-# ***********************DELETING, ADDING, AND EDITING QUESTIONS*****************************************************************************************
-# ***********************DELETING, ADDING, AND EDITING QUESTIONS*****************************************************************************************
+scanned_sergeant_question_text = list(set(current_sergeant_question_text_list))
 
-pagenum = 1
-processing_qil = True
-while processing_qil is True:
-    deleting_questions = True
-    adding_questions = True
-    editing_questions = True
-    while deleting_questions is True:
-        for counter, questionlistobject in enumerate(questionarr):
-            if str(questionlistobject[1]) not in current_sergeant_question_id_list:
-                print("we skipped: ", counter, questionlistobject[1])
-                continue
-            #  and questionlistobject[1] in current_sergeant_question_id_list
-            elif questionlistobject[2] is None and questionlistobject[1] is not None and str(questionlistobject[1]) in current_sergeant_question_id_list:
-                try:
-                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
-                    print(counter, "Question ID: " +
-                          str(questionlistobject[1]) + " was toggled Delete = ON.")
-                except Exception as my_error:
-                    if pagenum < 3:
-                        save_page()
-                        print("Going to next page for Question ID:  " +
-                              str(questionlistobject[1]))
-                        pagenum += 1
-                        click_next()
-                        # check for visibility of the delete toggle associated with our question ID
-                        WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-                            (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]")))
-                        # click aforementioned delete toggle if visible.
-                        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(
-                            questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
-                        continue
-                    else:
-                        print(
-                            "Some other condition has been triggered when trying to delete questions: ", my_error)
-                        deleting_questions = False
-                        # processing_qil = False
-                        break
-            elif counter == len(questionarr) - 1:
-                print('We have liftoff!')
-                save_page()
-                # Return to first page
-                return_home()
-                # Instead of going home, we should go to page '2'
-                WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-                    (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
-                deleting_questions = False
-                # processing_qil = False
-                break
-        # still need to save on the last page and return to page 1 or 2.
-        # deleting_questions = False
+# for x in current_sergeant_question_text_list:
+#     print(x)
+# for y in current_sergeant_question_id_list:
+#     print(y)
