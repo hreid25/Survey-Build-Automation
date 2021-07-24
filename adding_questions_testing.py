@@ -177,8 +177,18 @@ def return_home():
 
 
 def click_prev():
-    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'2')]"))).click()
+    # WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+    #     (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'2')]"))).click()
+    active_page = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'2')]")))
+    # implement check here to ensure we are going to the aforementioned page.
+    try:
+        prev_page_num = int(active_page.text) - 1
+        active_page.click()
+        WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
+            (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'" + str(prev_page_num) + "')]")))
+    except Exception as prev_click_error:
+        print('Something happened when click_prev() was invoked', prev_click_error)
 
 
 def questions_returntopageone():
@@ -349,21 +359,25 @@ while processing_qil is True:
                     continue
                 # Check to see if question has already been added, and then add custom id into the array.
                 if str(excelrowlistobject[2]) in scanned_sergeant_question_text:
-                    print('this question already exists in this survey: ', excelrowlistobject[2])
                     newcustomquestionid = WebDriverWait(driver, 10).until(
                         EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
                     insertcustomidtoarray = newcustomquestionid.text
                     questionarr[i][1] = insertcustomidtoarray
-                    print(questionarr[i][1], questionarr[i][2])
+                    print('Question ID: ' +
+                          str(excelrowlistobject[1]) + " already exists in this survey.")
+                    # print(questionarr[i][1], questionarr[i][2])
                     continue
+                # Match the driver name to its slug and return that value to our xpath below
                 for key, value in prettyname_slugname_dict.items():
                     if excelrowlistobject[0] == str(key):
                         slug_driver_name = value.replace("_", " ").title()
                 else:
-                    # Click add question btn (likely erroring out because its trying to click the next add question button while the fade in is still present)
-                    # May need to call webdriverwait on the fade in xpath
+                    # Click add question btn
+                    # ISSUES: on the last loop the newcustomquestionid assignment fails when calling webdriver wait.
                     print('slug_driver_name: ', slug_driver_name,
                           'question to be added: ', excelrowlistobject[2])
+                    WebDriverWait(driver, 5).until(EC.invisibility_of_element(
+                        (By.XPATH, "/html/body/div[2][@class='modal-backdrop fade in']")))
                     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
                         (By.XPATH, "//h4[not(@*) and contains(text(),'" + str(slug_driver_name) + "')]/following::button[position()=1]"))).click()
                     # Instantiate AddQuestionTextArea
@@ -381,18 +395,14 @@ while processing_qil is True:
                         except Exception:
                             clickercounter += 1
                             continue
-                        # Grab the Question ID of the new question and add it to questionarr[questionnum][1]
-                    # newcustomquestionid = WebDriverWait(driver, 10).until(
-                    #     EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
-                    # Match the text from excelrowlistobject to questionarr[counter][2] (the QIL question text) and then insert the Question ID to prev column
-                # for counter, qilrowlistobject in enumerate(questionarr):
-                #     if excelrowlistobject[2] == questionarr[counter][2]:
-                #         insertcustomidtoarray = newcustomquestionid.text
-                #         questionarr[counter][1] = insertcustomidtoarray
-                #     print(questionarr[counter][1], questionarr[counter][2])
-        print("Done adding questions...")
+                    newcustomquestionid = WebDriverWait(driver, 10).until(
+                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
+                    insertcustomidtoarray = newcustomquestionid.text
+                    questionarr[i][1] = insertcustomidtoarray
+                    print(questionarr[i][1], questionarr[i][2])
+        print("===========================Done adding questions===========================")
         adding_questions = False
         processing_qil = False
 
 for countingagain, i in enumerate(questionarr):
-    print(countingagain, i[1], i[2])
+    print(i[1], i[2])

@@ -226,8 +226,18 @@ def return_home():
 
 
 def click_prev():
-    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'2')]"))).click()
+    # WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+    #     (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'2')]"))).click()
+    active_page = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
+        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'2')]")))
+    # implement check here to ensure we are going to the aforementioned page.
+    try:
+        prev_page_num = int(active_page.text) - 1
+        active_page.click()
+        WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
+            (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li/a[contains(text(),'" + str(prev_page_num) + "')]")))
+    except Exception as prev_click_error:
+        print('Something happened when click_prev() was invoked', prev_click_error)
 
 
 def questions_returntopageone():
@@ -354,7 +364,7 @@ while scanningforquestiongroups is True:
     except Exception:
         scanningforquestiongroups = False
         questiongroupspresent = False
-        print("No question group objects found")
+        print("Done scanning for senior management question grouping + deleting...")
         # questions_returntopageone()
         break
 print("--- %s seconds ---" % (time.time() - start_time_measure_seniormgt_deletion))
@@ -415,7 +425,7 @@ while processing_qil is True:
                         deleting_questions = False
                         break
             elif counter == len(questionarr) - 1:
-                print('Question Deletion has completed!')
+                print('===========================Question Deletion has completed!===========================')
                 save_page()
                 # Return to top of page (ctrl + home)
                 return_home()
