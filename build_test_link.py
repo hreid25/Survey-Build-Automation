@@ -192,7 +192,7 @@ while driver_match_scan is True:
                 print("Done collecting driver 'Pretty names' and 'Slug names'!...")
                 driver_match_scan = False
                 # Return to page one
-                WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+                WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
                     (By.XPATH, "//*[@class='pagination']/li[@class='first']/a"))).click()
 editquestions = WebDriverWait(driver, 10).until(
     EC.element_to_be_clickable((By.LINK_TEXT, 'Questions'))).click()
@@ -360,7 +360,7 @@ while scanningforquestiongroups is True:
                 if i == "Question Group Title":
                     seniormgmtdeletetoggles[sergeantlistdeletetoggleposition].click()
                     sergeantlistdeletetoggleposition += 1
-                    print(i)
+                    # print(i)
             questiongroupspresent = False
             scanningforquestiongroups = False
         save_page()
