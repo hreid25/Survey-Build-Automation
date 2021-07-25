@@ -360,7 +360,7 @@ while processing_qil is True:
                 # Check to see if question has already been added, and then add custom id into the array.
                 if str(excelrowlistobject[2]) in scanned_sergeant_question_text:
                     newcustomquestionid = WebDriverWait(driver, 10).until(
-                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
+                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + str(excelrowlistobject[2]) + "']/following::strong[position()=2]")))
                     insertcustomidtoarray = newcustomquestionid.text
                     questionarr[i][1] = insertcustomidtoarray
                     print('Question ID: ' +
@@ -374,8 +374,10 @@ while processing_qil is True:
                 else:
                     # Click add question btn
                     # ISSUES: on the last loop the newcustomquestionid assignment fails when calling webdriver wait.
-                    print('slug_driver_name: ', slug_driver_name,
-                          'question to be added: ', excelrowlistobject[2])
+                    print('======================================================')
+                    print('slug driver name: ', slug_driver_name.upper())
+                    print('question to be added: ', excelrowlistobject[2])
+                    print('======================================================')
                     WebDriverWait(driver, 5).until(EC.invisibility_of_element(
                         (By.XPATH, "/html/body/div[2][@class='modal-backdrop fade in']")))
                     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
@@ -392,17 +394,18 @@ while processing_qil is True:
                             driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
                             WebDriverWait(driver, 2).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
                                 EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
+                            # check to see visibility of new question added, grab question id and reinsert to question array.
+                            newcustomquestionid = WebDriverWait(driver, 10).until(
+                                EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + str(excelrowlistobject[2]) + "']/following::strong[position()=2]")))
+                            insertcustomidtoarray = newcustomquestionid.text
+                            questionarr[i][1] = insertcustomidtoarray
+                            print(questionarr[i][1], questionarr[i][2])
                         except Exception:
                             clickercounter += 1
                             continue
-                    newcustomquestionid = WebDriverWait(driver, 10).until(
-                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + excelrowlistobject[2] + "']/following::strong[position()=2]")))
-                    insertcustomidtoarray = newcustomquestionid.text
-                    questionarr[i][1] = insertcustomidtoarray
-                    print(questionarr[i][1], questionarr[i][2])
         print("===========================Done adding questions===========================")
         adding_questions = False
         processing_qil = False
-
+print("--- %s seconds ---" % (time.time() - start_time))
 for countingagain, i in enumerate(questionarr):
     print(i[1], i[2])
