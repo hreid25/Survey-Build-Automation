@@ -65,22 +65,17 @@ for r in range(4, 100):
         hover_words_array.append(hover_words)
         hover_texts_array.append(hover_texts)
 # hoverarray = [x for x in fhovers if x != []]
-
 # ***********************REPLACE WORD WITH HOVER*******************************************************************************
 # ***********************REPLACE WORD WITH HOVER*******************************************************************************
 # ***********************REPLACE WORD WITH HOVER*******************************************************************************
-
 # hoverlanguage count actually includes all of the None type objects read in using
 # openpyxl (approx 32), even though there may be fewer languages
 # TO DO: find the last column of data and stop there (both in the question array and hover array)
-
 hoverlanguagecount = len((hover_words_array[0]))
 numtotalhovers = len(hover_words_array) - 1
 numtotalquestions = len(questionarr)
-
 langnum = 1
 hoverlangnum = 0
-
 while langnum < hoverlanguagecount:
     hovernum = 1
     while hovernum < numtotalhovers:
@@ -98,18 +93,19 @@ while langnum < hoverlanguagecount:
                             replacehover = "{{" + "\"" + \
                                 str(propercase) + " (" + str(text) + ")\" |hover}} "
                             pattern = re.compile('\\b' + word + '\\s', re.IGNORECASE)
-                            questionarr[questionnum][langnum + 1] = pattern.sub(replacehover, quest)
+                            questionarr[questionnum][langnum +
+                                                     1] = pattern.sub(replacehover, quest)
                         else:
                             normalcase = word.lower()
                             replacehover = "{{" + "\"" + \
                                 str(normalcase) + " (" + str(text) + ")\" |hover}} "
                             pattern = re.compile('\\b' + word + '\\s', re.IGNORECASE)
-                            questionarr[questionnum][langnum + 1] = pattern.sub(replacehover, quest)
+                            questionarr[questionnum][langnum +
+                                                     1] = pattern.sub(replacehover, quest)
                 questionnum += 1
         hovernum += 1
     langnum += 1
     hoverlangnum += 1
-
 
 # *************************READ IN SURVEY INVITATION EMAIL**************************************************************
 # *************************READ IN SURVEY INVITATION EMAIL**************************************************************
@@ -270,6 +266,8 @@ def click_first_questions_page():
             (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
     except Exception as click_first_error:
         print(click_first_error)
+
+
 # def changelanguage():
 #     try:
 #         for language in emailinvitationarray[0]:
@@ -303,9 +301,9 @@ chgpage = 1
 id_match_scan = True
 while id_match_scan is True:
     # Read in id text
-    sergeant_question_id_list = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located(
+    sergeant_question_id_list = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
         (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong")))
-    sergeant_question_text_list = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located(
+    sergeant_question_text_list = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
         (By.XPATH, "//*[contains(@class,'question-text-area sortable-disabled') and contains(@id,'survey_pages_attributes')]")))
     # Create secondary list obj
     all_my_sergeant_ids = [x.text for x in sergeant_question_id_list]
@@ -355,7 +353,7 @@ while scanningforquestiongroups is True:
             (By.XPATH, "//h6[contains(text(),'Question Group Title')]/following::div[@class='row'][3]/div/div")))
         questiongroupspresent = questiongroupsobjects.is_displayed()
         while questiongroupspresent is True:
-            secondarytextlist = [x.text for x in findquestiongroups]
+            secondarytextlist = [str(x.text) for x in findquestiongroups]
             for i in secondarytextlist:
                 if i == "Question Group Title":
                     seniormgmtdeletetoggles[sergeantlistdeletetoggleposition].click()
@@ -423,13 +421,15 @@ while processing_qil is True:
                         deleting_questions = False
                         break
             elif counter == len(questionarr) - 1:
-                print('===========================Question Deletion has completed!===========================')
+                print('===========================Done deleting Questions!===========================')
                 save_page()
                 # Return to top of page (ctrl + home). Otherwise, clicking save fails
                 return_home()
-                # click page 1
+                # Go To Page 1
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
                     (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
+                WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+                    (By.XPATH, "//*[@class='page active']/a[text()='1']")))
                 deleting_questions = False
                 pagenum = 1
                 # processing_qil = False
@@ -444,21 +444,22 @@ while processing_qil is True:
                 # All questions overwrite a default cell in the QIL that says 'Empty Slot'
                 if excelrowlistobject[2] == "Empty Slot":
                     continue
-                # Check to see if question has already been added, and then add custom id into the array.
-                if str(excelrowlistobject[2]) in scanned_sergeant_question_text:
-                    newcustomquestionid = WebDriverWait(driver, 10).until(
+                elif str(excelrowlistobject[2]) in scanned_sergeant_question_text:
+                    # Pass the text through to the xpath and then grab the custom question ID, reinsert to QIL array.
+                    # Apostrophe breaks the XPATH when passed through to selenium
+                    # https://www.w3.org/TR/xpath20/#id-literals review terminal delimiters and how to escape for string literals
+                    newcustomquestionid = WebDriverWait(driver, 20).until(
                         EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + str(excelrowlistobject[2]) + "']/following::strong[position()=2]")))
                     insertcustomidtoarray = newcustomquestionid.text
                     questionarr[i][1] = insertcustomidtoarray
                     print('Question ID: ' +
-                          str(excelrowlistobject[1]) + " already exists in this survey.")
-                    # print(questionarr[i][1], questionarr[i][2])
+                          str(excelrowlistobject[1]) + " has been added to the array.")
                     continue
                 # Match the driver name to its slug and return that value to our xpath below
                 for key, value in prettyname_slugname_dict.items():
                     if excelrowlistobject[0] == str(key):
                         slug_driver_name = value.replace("_", " ").title()
-                else:
+                if str(excelrowlistobject[2]) not in scanned_sergeant_question_text:
                     # Click add question btn
                     # ISSUES: on the last loop the newcustomquestionid assignment fails when calling webdriver wait.
                     WebDriverWait(driver, 5).until(EC.invisibility_of_element(
@@ -478,7 +479,7 @@ while processing_qil is True:
                             WebDriverWait(driver, 5).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
                                 EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
                             # check to see visibility of new question added, grab question id and reinsert to question array.
-                            newcustomquestionid = WebDriverWait(driver, 20).until(
+                            newcustomquestionid = WebDriverWait(driver, 60).until(
                                 EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + str(excelrowlistobject[2]) + "']/following::strong[position()=2]")))
                             insertcustomidtoarray = newcustomquestionid.text
                             questionarr[i][1] = insertcustomidtoarray
@@ -493,31 +494,33 @@ while processing_qil is True:
         print("===========================Done adding questions===========================")
         adding_questions = False
         processing_qil = False
-    # while editing_questions is True:
-    #     columnnumber = 2
-    #     return_home()  # recently added without testing
-    #     questions_returntopageone()
-    #     for edit_counter, qilrowlistobj in enumerate(questionarr):
-    #         # passing the question id through the text area element to make sure properly updating
-    #         sergeant_questionid_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-    #             (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']")))
-    #         if qilrowlistobj[1] == sergeant_questionid_element:
-    #             try:
-    #                 sergeant_question_text_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-    #                     (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']/ancestor::div[position()=4]/textarea")))
-    #                 QILarrayenumerated = [(index, row.index(int(qilrowlistobj[1])))
-    #                                       for index, row in enumerate(questionarr) if int(qilrowlistobj[1]) in row]
-    #                 question_position_rownum = QILarrayenumerated[0][0]
-    #                 sergeant_question_text_element.clear()
-    #                 sergeant_question_text_element.send_keys(
-    #                     questionarr[question_position_rownum][columnnumber])
-    #             except Exception as edit_error:
-    #                 print("Looks like we ran out of questions to edit! Clicking Next...", edit_error)
-    #                 save_page()
-    #                 click_next()
-    #                 continue
-    # processing_qil = False
-    # editing_questions = False
-for countingagain, i in enumerate(questionarr):
-    print(i[1], i[2])
+#     while editing_questions is True:
+#         columnnumber = 2
+#         return_home()  # recently added without testing
+#         questions_returntopageone()
+#         for edit_counter, qilrowlistobj in enumerate(questionarr):
+#             # passing the question id through the text area element to make sure properly updating
+#             sergeant_questionid_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+#                 (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']")))
+#             if qilrowlistobj[1] == sergeant_questionid_element:
+#                 try:
+#                     sergeant_question_text_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+#                         (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']/ancestor::div[position()=4]/textarea")))
+#                     QILarrayenumerated = [(index, row.index(int(qilrowlistobj[1])))
+#                                           for index, row in enumerate(questionarr) if int(qilrowlistobj[1]) in row]
+#                     question_position_rownum = QILarrayenumerated[0][0]
+#                     sergeant_question_text_element.clear()
+#                     sergeant_question_text_element.send_keys(
+#                         questionarr[question_position_rownum][columnnumber])
+#                 except Exception as edit_error:
+#                     print("Looks like we ran out of questions to edit! Clicking Next...", edit_error)
+#                     save_page()
+#                     click_next()
+#                     continue
+#     print("===========================Done editing questions===========================")
+#     editing_questions = False
+#     processing_qil = False
+#
+# for countingagain, i in enumerate(questionarr):
+#     print(i[1], i[2])
 print("--- %s seconds ---" % (time.time() - start_time))

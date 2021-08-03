@@ -105,7 +105,7 @@ while langnum < hoverlanguagecount:
                             replacehover = "{{" + "\"" + \
                                 str(normalcase) + " (" + str(text) + ")\" |hover}} "
                             pattern = re.compile(r'\b' + word + r'\b\s|' +
-                                                 r'\b' + word + r'\W\s', re.IGNORECASE)
+                                                 r'\b' + word + r'\W\s|', re.IGNORECASE)
                             questionarr[questionnum][langnum + 1] = pattern.sub(replacehover, quest)
                 questionnum += 1
         hovernum += 1
