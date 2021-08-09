@@ -185,7 +185,7 @@ while driver_match_scan is True:
                 WebDriverWait(driver, 5).until(EC.visibility_of_element_located(
                     (By.XPATH, "//*[contains(@class,'page active')]/a[@data-remote='true' and contains(text(),'" + str(chgpage) + "')]/ancestor::ul/preceding::tbody/tr")))
             except Exception:
-                print("Done collecting driver 'Pretty names' and 'Slug names'!...")
+                print("Done collecting Driver 'Pretty names' and 'Slug names'!...")
                 driver_match_scan = False
                 # Return to page one
                 WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
@@ -195,6 +195,8 @@ editquestions = WebDriverWait(driver, 10).until(
 # Create key, value pairs for pretty name and slug driver names
 prettyname_slugname_dict = {final_list[i]: final_list[i + 1] for i in range(0, len(final_list), 2)}
 
+
+#  CLICK EDIT QUESTIONS BUTTON
 editquestions = WebDriverWait(driver, 10).until(
     EC.element_to_be_clickable((By.LINK_TEXT, 'Questions'))).click()
 
@@ -266,6 +268,20 @@ def click_first_questions_page():
             (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[1]/a"))).click()
     except Exception as click_first_error:
         print(click_first_error)
+
+
+def escape_string_for_xpath(s):
+    if '"' in s and "'" in s:
+        return 'concat(%s)' % ", '\"',".join('"%s"' % x for x in s.split('"'))
+    elif '"' in s:
+        return "'%s'" % s
+    return '"%s"' % s
+
+    # USAGE EXAMPLE
+    # escaped_title = escape_string_for_xpath('"that\'ll be the "day"')
+    # driver.find_element_by_xpath('//a[@title=' + escaped_title + ']')
+    # Note that it adds the appropriate kind of quotes around your string, so be sure not to add extra quotes around the return value.
+    # https://newbedev.com/how-to-escape-single-quote-in-xpath-1-0-in-selenium-for-python?fbclid=IwAR1z51gplypVxKsFC_gx76JBlfIw5YTCBMwhhQikXB0BP6fNc8s3OR8x_YM
 
 
 # def changelanguage():
@@ -446,14 +462,15 @@ while processing_qil is True:
                     continue
                 elif str(excelrowlistobject[2]) in scanned_sergeant_question_text:
                     # Pass the text through to the xpath and then grab the custom question ID, reinsert to QIL array.
-                    # Apostrophe breaks the XPATH when passed through to selenium
-                    # https://www.w3.org/TR/xpath20/#id-literals review terminal delimiters and how to escape for string literals
+                    # Need to format the string to be escaped when its passed to the XPATH expression to account for apostrophe's and double quotes that would otherwise act as line terminators.
+                    # https://newbedev.com/how-to-escape-single-quote-in-xpath-1-0-in-selenium-for-python?fbclid=IwAR1z51gplypVxKsFC_gx76JBlfIw5YTCBMwhhQikXB0BP6fNc8s3OR8x_YM
+                    escaped_question_text = escape_string_for_xpath(excelrowlistobject[2])
                     newcustomquestionid = WebDriverWait(driver, 20).until(
-                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + str(excelrowlistobject[2]) + "']/following::strong[position()=2]")))
+                        EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder=" + escaped_question_text + "]/following::strong[position()=2]")))
                     insertcustomidtoarray = newcustomquestionid.text
                     questionarr[i][1] = insertcustomidtoarray
                     print('Question ID: ' +
-                          str(excelrowlistobject[1]) + " has been added to the array.")
+                          str(excelrowlistobject[1]) + " has already been added to the survey.")
                     continue
                 # Match the driver name to its slug and return that value to our xpath below
                 for key, value in prettyname_slugname_dict.items():
@@ -474,13 +491,14 @@ while processing_qil is True:
                     clickercounter = 1
                     while clickercounter < 2:
                         try:
-                            # Click Save
+                            # Return to top of page and Click Save
                             driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
                             WebDriverWait(driver, 5).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
                                 EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
                             # check to see visibility of new question added, grab question id and reinsert to question array.
+                            escaped_question_text = escape_string_for_xpath(excelrowlistobject[2])
                             newcustomquestionid = WebDriverWait(driver, 60).until(
-                                EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder='" + str(excelrowlistobject[2]) + "']/following::strong[position()=2]")))
+                                EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder=" + escaped_question_text + "]/following::strong[position()=2]")))
                             insertcustomidtoarray = newcustomquestionid.text
                             questionarr[i][1] = insertcustomidtoarray
                         except Exception:
@@ -494,32 +512,38 @@ while processing_qil is True:
         print("===========================Done adding questions===========================")
         adding_questions = False
         processing_qil = False
-#     while editing_questions is True:
-#         columnnumber = 2
-#         return_home()  # recently added without testing
-#         questions_returntopageone()
-#         for edit_counter, qilrowlistobj in enumerate(questionarr):
-#             # passing the question id through the text area element to make sure properly updating
-#             sergeant_questionid_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-#                 (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']")))
-#             if qilrowlistobj[1] == sergeant_questionid_element:
-#                 try:
-#                     sergeant_question_text_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-#                         (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[contains(text(),'" + qilrowlistobj[1] + "']/ancestor::div[position()=4]/textarea")))
-#                     QILarrayenumerated = [(index, row.index(int(qilrowlistobj[1])))
-#                                           for index, row in enumerate(questionarr) if int(qilrowlistobj[1]) in row]
-#                     question_position_rownum = QILarrayenumerated[0][0]
-#                     sergeant_question_text_element.clear()
-#                     sergeant_question_text_element.send_keys(
-#                         questionarr[question_position_rownum][columnnumber])
-#                 except Exception as edit_error:
-#                     print("Looks like we ran out of questions to edit! Clicking Next...", edit_error)
-#                     save_page()
-#                     click_next()
-#                     continue
-#     print("===========================Done editing questions===========================")
-#     editing_questions = False
-#     processing_qil = False
+    while editing_questions is True:
+        columnnumber = 2
+        return_home()  # recently added without testing
+        questions_returntopageone()
+        for edit_counter, qilrowlistobj in enumerate(questionarr):
+            print(type(qilrowlistobj[1]), qilrowlistobj[1])
+            # passing the question id through the text area element to ensure match
+            # type mismatch error preventing from editing. Need to cast qilrowlistobj[1] as int?
+            try:
+                sergeant_questionid_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+                    (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[string()='" + str(qilrowlistobj[1]) + "']")))
+            except Exception:
+                print("Unable to find a match for: ", qilrowlistobj[1])
+                continue
+            if qilrowlistobj[1] == sergeant_questionid_element:
+                try:
+                    sergeant_question_text_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[string()='" + str(qilrowlistobj[1]) + "']/ancestor::div[position()=4]/textarea")))
+                    QILarrayenumerated = [(index, row.index(int(qilrowlistobj[1])))
+                                          for index, row in enumerate(questionarr) if int(qilrowlistobj[1]) in row]
+                    question_position_rownum = QILarrayenumerated[0][0]
+                    sergeant_question_text_element.clear()
+                    sergeant_question_text_element.send_keys(
+                        questionarr[question_position_rownum][columnnumber])
+                except Exception as edit_error:
+                    print("Looks like we ran out of questions to edit! Clicking Next...", edit_error)
+                    save_page()
+                    click_next()
+                    continue
+    print("===========================Done editing questions===========================")
+    editing_questions = False
+    processing_qil = False
 #
 # for countingagain, i in enumerate(questionarr):
 #     print(i[1], i[2])
