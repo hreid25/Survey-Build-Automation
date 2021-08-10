@@ -407,7 +407,7 @@ while processing_qil is True:
     while deleting_questions is True:
         for counter, questionlistobject in enumerate(questionarr):
             if str(questionlistobject[1]) not in current_sergeant_question_id_list:
-                print("we skipped: ", counter, questionlistobject[1])
+                print("Question ID: ", questionlistobject[1], "has already been deleted")
                 continue
             # Another if condition in here to check the toggle status (Y/N)
             elif questionlistobject[2] is None and questionlistobject[1] is not None and str(questionlistobject[1]) in current_sergeant_question_id_list:
@@ -467,7 +467,7 @@ while processing_qil is True:
                     escaped_question_text = escape_string_for_xpath(excelrowlistobject[2])
                     newcustomquestionid = WebDriverWait(driver, 20).until(
                         EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder=" + escaped_question_text + "]/following::strong[position()=2]")))
-                    insertcustomidtoarray = newcustomquestionid.text
+                    insertcustomidtoarray = int(newcustomquestionid.text)
                     questionarr[i][1] = insertcustomidtoarray
                     print('Question ID: ' +
                           str(excelrowlistobject[1]) + " has already been added to the survey.")
@@ -493,13 +493,13 @@ while processing_qil is True:
                         try:
                             # Return to top of page and Click Save
                             driver.find_element_by_tag_name('body').send_keys(Keys.TAB)
-                            WebDriverWait(driver, 5).until(                                 # Changed the driver to 1 second here. Adjust back to 2 if issues
+                            WebDriverWait(driver, 5).until(
                                 EC.element_to_be_clickable((By.XPATH, "//form[@id='add-custom-question-form']/div[@class='modal-footer']/input[@type='submit']"))).click()
                             # check to see visibility of new question added, grab question id and reinsert to question array.
                             escaped_question_text = escape_string_for_xpath(excelrowlistobject[2])
                             newcustomquestionid = WebDriverWait(driver, 60).until(
                                 EC.visibility_of_element_located((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled question')][@placeholder=" + escaped_question_text + "]/following::strong[position()=2]")))
-                            insertcustomidtoarray = newcustomquestionid.text
+                            insertcustomidtoarray = int(newcustomquestionid.text)
                             questionarr[i][1] = insertcustomidtoarray
                         except Exception:
                             clickercounter += 1
@@ -511,40 +511,59 @@ while processing_qil is True:
                     print('======================================================')
         print("===========================Done adding questions===========================")
         adding_questions = False
-        processing_qil = False
+        # processing_qil = False
+        questions_returntopageone()
+        # wait for page 1 to be visible
+        WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+            (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[@class='page active']/a[text()='1']")))
+    editing_questions = True
     while editing_questions is True:
         columnnumber = 2
-        return_home()  # recently added without testing
-        questions_returntopageone()
-        for edit_counter, qilrowlistobj in enumerate(questionarr):
-            print(type(qilrowlistobj[1]), qilrowlistobj[1])
-            # passing the question id through the text area element to ensure match
-            # type mismatch error preventing from editing. Need to cast qilrowlistobj[1] as int?
-            try:
-                sergeant_questionid_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-                    (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[string()='" + str(qilrowlistobj[1]) + "']")))
-            except Exception:
-                print("Unable to find a match for: ", qilrowlistobj[1])
-                continue
-            if qilrowlistobj[1] == sergeant_questionid_element:
-                try:
-                    sergeant_question_text_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-                        (By.XPATH, "//*[@class='switch-container span10']/div[3]/span/strong[string()='" + str(qilrowlistobj[1]) + "']/ancestor::div[position()=4]/textarea")))
-                    QILarrayenumerated = [(index, row.index(int(qilrowlistobj[1])))
-                                          for index, row in enumerate(questionarr) if int(qilrowlistobj[1]) in row]
-                    question_position_rownum = QILarrayenumerated[0][0]
-                    sergeant_question_text_element.clear()
-                    sergeant_question_text_element.send_keys(
-                        questionarr[question_position_rownum][columnnumber])
-                except Exception as edit_error:
-                    print("Looks like we ran out of questions to edit! Clicking Next...", edit_error)
+        # implement a wait to ensure we are on page 1
+        questionareaboxeslist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+            (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong/ancestor::div/textarea[starts-with(@class,'question-text-area sortable-disabled question')]")))
+        sergeantquestionidlist = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+            (By.XPATH, "//*[starts-with(@class,'switch-container')]/div[3]/span/strong")))
+        secondaryidlist = [x.text for x in sergeantquestionidlist]
+        # print(secondaryidlist)
+        for idposcounter, myquestionid in enumerate(secondaryidlist):
+            QILarrayenumerated = [(index, row.index(int(myquestionid)))
+                                  for index, row in enumerate(questionarr) if int(myquestionid) in row]
+            print(QILarrayenumerated, "Question ID: ", myquestionid)
+            QILquestionposition = QILarrayenumerated[0][0]
+            # print(questionarr[QILquestionposition][columnnumber])
+            if questionarr[QILquestionposition][columnnumber] is not None:
+                replacetext = questionarr[QILquestionposition][columnnumber]
+                questionareaboxeslist[idposcounter].clear()
+                questionareaboxeslist[idposcounter].send_keys(replacetext)
+                if int(secondaryidlist[0]) == int(16595):
                     save_page()
+                    # wait for visibility of Successful save banner
+                    WebDriverWait(driver, 15).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@class='alert alert-notice']/a")))
                     click_next()
-                    continue
-    print("===========================Done editing questions===========================")
-    editing_questions = False
-    processing_qil = False
-#
-# for countingagain, i in enumerate(questionarr):
-#     print(i[1], i[2])
-print("--- %s seconds ---" % (time.time() - start_time))
+                    # wait for page 2 to be the active page
+                    WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[@class='page active']/a[text()='2']")))
+                    pagenum = 2
+                # This checks if we have edited the last question of page 2, then saves and clicks next
+                elif idposcounter == len(secondaryidlist) - 1 and pagenum == 2:
+                    save_page()
+                    WebDriverWait(driver, 15).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@class='alert alert-notice']/a")))
+                    click_next()
+                    WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[@class='page active']/a[text()='3']")))
+                    pagenum = 3
+                # This checks to see if we finished editing questions on page (3), saves and returns to first
+                elif idposcounter == len(secondaryidlist) - 1 and pagenum == 3:
+                    save_page()
+                    WebDriverWait(driver, 15).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@class='alert alert-notice']/a")))
+                    questions_returntopageone()
+                    WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[@id='survey-edit-questions']/div[3]/div/ul/li[@class='page active']/a[text()='1']")))
+                    editing_questions = False
+                    processing_qil = False
+                    break
+    print("--- %s seconds ---" % (time.time() - start_time))
