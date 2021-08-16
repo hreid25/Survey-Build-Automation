@@ -20,7 +20,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 # ***********************Start timer, load workbook, ask input********************************************************
 
 start_time = time.time()
-wb = openpyxl.load_workbook('Delete Edit Test QIL.xlsm')
+# wb = openpyxl.load_workbook('Version_OneTest.xlsm')
+wb = openpyxl.load_workbook('PerformanceTrust.xlsm')
 # wb = openpyxl.load_workbook(input("Please enter the name of your QIL Document: "))
 surveyhovers = wb['5- Hovers (Optional)']
 surveyquest = wb['4- Survey Questions']
@@ -140,7 +141,7 @@ linkElemEng.click()
 
 # surveyname = input("Enter the name of your survey as it appears in Sergeant: ")
 surveyname = "Survey Automation Testing"
-
+# surveyname = "Cloned Performance Trust Information Technology Employee Survey"
 # ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
 # ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
 # ***********************FIND SURVEY NAME / START EDITING QUESTIONS********************************************************
@@ -407,16 +408,20 @@ while processing_qil is True:
     while deleting_questions is True:
         for counter, questionlistobject in enumerate(questionarr):
             if str(questionlistobject[1]) not in current_sergeant_question_id_list:
-                print("Question ID: ", questionlistobject[1], "has already been deleted")
+                print("Question ID: ", questionlistobject[1], "not found in: ", surveyname)
                 continue
             # Another if condition in here to check the toggle status (Y/N)
             elif questionlistobject[2] is None and questionlistobject[1] is not None and str(questionlistobject[1]) in current_sergeant_question_id_list:
                 try:
                     # Click delete
-                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
-                    print(counter, "Question ID: " +
-                          str(questionlistobject[1]) + " was toggled Delete = ON.")
+                    # check question id is visible
+                    WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and text()='" + str(questionlistobject[1]) + "']")))
+                    # Click delete toggle associated with that question ID
+                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+                        (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and text()='" + str(questionlistobject[1]) + "']/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
+                    print("Question ID: " +
+                          str(questionlistobject[1]) + " has been toggled Delete = ON.")
                 except Exception as my_error:
                     if pagenum < 3:
                         save_page()
@@ -424,12 +429,12 @@ while processing_qil is True:
                               str(questionlistobject[1]))
                         pagenum += 1
                         click_next()
-                        # check for visibility of the delete toggle associated with our question ID
+                        # check for visibility of the Question ID
                         WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-                            (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(questionlistobject[1]) + "')]")))
+                            (By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and text()='" + str(questionlistobject[1]) + "']")))
                         # click aforementioned delete toggle if visible.
-                        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and contains(text(),'" + str(
-                            questionlistobject[1]) + "')]/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
+                        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[starts-with(@class,'question-text-area sortable-disabled')]/following::strong[position()=2 and text()='" + str(
+                            questionlistobject[1]) + "']/ancestor::div[@class='move-content sortable-disabled']/child::div[@class='row']/div/div"))).click()
                         continue
                     else:
                         print(
